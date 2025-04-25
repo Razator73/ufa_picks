@@ -1,0 +1,57 @@
+{
+  "name": "ufa_picks",
+  "version": "1.0.0",
+  "description": "UFA Game picks for 2025 season",
+  "scripts": {
+    "build": "run-script-os",
+    "build:win32": "SET NODE_ENV=production && webpack --progress --color --optimization-minimize && npm run flask-static-digest",
+    "build:default": "NODE_ENV=production webpack --progress --color --optimization-minimize && npm run flask-static-digest",
+    "start": "run-script-os",
+    "start:win32": "concurrently -n \"WEBPACK,FLASK\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run webpack-watch:win32\" \"npm run flask-server\"",
+    "start:default": "concurrently -n \"WEBPACK,FLASK\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run webpack-watch\" \"npm run flask-server\"",
+    "webpack-watch": "run-script-os",
+    "webpack-watch:win32": "SET NODE_ENV=debug && webpack --mode development --watch",
+    "webpack-watch:default": "NODE_ENV=debug webpack --mode development --watch",
+    "flask-server": "flask run --host=0.0.0.0",
+    "flask-static-digest": "flask digest compile",
+    "lint": "eslint \"assets/js/*.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/razator73/ufa_picks.git"
+  },
+  "author": "Ryan Scott",
+  "license": "MIT",
+  "engines": {
+    "node": ">="
+  },
+  "bugs": {
+    "url": "https://github.com/razator73/ufa_picks/issues"
+  },
+  "homepage": "https://github.com/razator73/ufa_picks#readme",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "6.7.2",
+    "bootstrap": "5.3.5",
+    "jquery": "3.7.1",
+    "@popperjs/core": "2.11.8"
+  },
+  "devDependencies": {
+    "@babel/core": "7.26.10",
+    "@babel/preset-env": "7.26.9",
+    "@babel/eslint-parser": "7.27.0",
+    "babel-loader": "10.0.0",
+    "chokidar": "4.0.3",
+    "concurrently": "9.1.2",
+    "css-loader": "7.1.2",
+    "eslint": "9.25.1",
+    "eslint-config-prettier": "10.1.2",
+    "eslint-plugin-prettier": "5.2.6",
+    "less": "4.3.0",
+    "less-loader": "12.2.0",
+    "mini-css-extract-plugin": "2.9.2",
+    "prettier": "3.5.3",
+    "run-script-os": "1.1.6",
+    "webpack": "5.99.6",
+    "webpack-cli": "6.0.1"
+  }
+}

@@ -1,0 +1,6 @@
+[run]
+source = ufa_picks
+omit = 
+    tests/*
+    autoapp.py
+
