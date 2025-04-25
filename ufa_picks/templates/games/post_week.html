@@ -1,0 +1,30 @@
+<style>
+  table th, table td {
+    padding-right: 1em;
+    padding-left: 1em;
+  }
+</style>
+
+{% extends "layout.html" %}
+{% block content %}
+    <div class="container">
+        <h1>UFA Games Week {{ week_num }}</h1>
+          {% for game in games %}
+            <li>{{ game['game'].away_team.team_city }} {{ game['game'].away_team.team_name }} @
+              {{ game['game'].home_team.team_city }} {{ game['game'].home_team.team_name }}</li>
+            <table>
+              <tr>
+                {% for pick in game['picks'] %}
+                  <th>{{ pick.user.full_name }}</th>
+                {% endfor %}
+              </tr>
+              <tr>
+                {% for pick in game['picks'] %}
+                  <td>{{ pick.pick_str }}</td>
+                {% endfor %}
+              </tr>
+            </table>
+          {% endfor %}
+        </form>
+    </div>
+{% endblock %}

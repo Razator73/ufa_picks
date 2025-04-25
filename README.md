@@ -2,6 +2,21 @@
 
 UFA Game picks for 2025 season
 
+### Database structure
+Data base design saved in `sqldesigner.xml`
+
+[SQL Designer](https://ondras.zarovi.cz/sql/demo/)
+
+Copy db design to clipboard
+```
+xclip -sel c < sqldesigner.xml
+```
+
+Dump db design from clipboard
+```
+xsel -b > sqldesigner.xml
+```
+
 ## Docker Quickstart
 
 This app can be run completely using `Docker` and `docker compose`. **Using Docker is recommended, as it guarantees the application is run using compatible versions of Python and Node**.

@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="container">
+        <h1>UFA Games Week {{ week_num }}</h1>
+        <form method="POST">
+          {{ form.hidden_tag() }}
+          {% for game in games %}
+            <li>{{ game['game'].away_team.team_city }} {{ game['game'].away_team.team_name }} @
+              {{ game['game'].home_team.team_city }} {{ game['game'].home_team.team_name }}</li>
+              {{ game['form'].away_team_score() }} {{ game['form'].home_team_score() }}
+              {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
+          {% endfor %}
+          <br><button type="submit" class="btn btn-primary">Submit Picks</button>
+          <p>Can be edited even after submitting up till the first game of the week starts.</p>
+        </form>
+    </div>
+{% endblock %}
