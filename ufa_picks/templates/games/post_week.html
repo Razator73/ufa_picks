@@ -10,8 +10,14 @@
     <div class="container">
         <h1>UFA Games Week {{ week_num }}</h1>
           {% for game in games %}
-            <li>{{ game['game'].away_team.team_city }} {{ game['game'].away_team.team_name }} @
-              {{ game['game'].home_team.team_city }} {{ game['game'].home_team.team_name }}</li>
+            <li>{{ game['game'].away_team.team_city }} {{ game['game'].away_team.team_name }}
+              {% if game['game'].status != 'Upcoming' %}
+                - {{ game['game'].away_score }}
+              {% endif %} @
+              {{ game['game'].home_team.team_city }} {{ game['game'].home_team.team_name }}
+              {% if game['game'].status != 'Upcoming' %}
+                - {{ game['game'].home_score }} ({{ game['game'].status }})
+              {% endif %}</li>
             <table>
               <tr>
                 {% for pick in game['picks'] %}
