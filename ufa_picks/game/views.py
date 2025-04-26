@@ -75,7 +75,7 @@ def post_lock(week_num):
 @login_required
 def week(week_num):
     first_game = Game.query.filter_by(week=week_num).order_by(Game.start_timestamp).first()
-    lock = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) > dt.datetime(2025, 4, 26, 0, 0, 0)
+    lock = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) > first_game.start_timestamp
     if lock:
         return post_lock(week_num)
     else:

@@ -86,10 +86,20 @@ class Pick(PkModel):
     __table_args__ = (db.UniqueConstraint('user_id', 'game_id', name='unique_user_game'),)
 
     @property
+    def winner(self):
+        """The winner picked"""
+        return self.game.home_team if self.home_team_score > self.away_team_score \
+            else self.game.away_team
+
+    @property
+    def loser(self):
+        """The loser picked"""
+        return self.game.home_team if self.home_team_score < self.away_team_score \
+            else self.game.away_team
+
+    @property
     def pick_str(self):
         """Return the winner and score"""
-        winner = self.game.home_team.team_name if self.home_team_score > self.away_team_score \
-            else self.game.away_team.team_name
         higher_score = self.home_team_score if self.home_team_score > self.away_team_score else self.away_team_score
         lower_score = self.home_team_score if self.home_team_score < self.away_team_score else self.away_team_score
-        return f"{winner} {higher_score} - {lower_score}"
+        return f"{self.winner.team_name} {higher_score} - {lower_score}"
