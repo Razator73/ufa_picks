@@ -41,7 +41,8 @@ class User(UserMixin, PkModel):
     last_name = Column(db.String(30), nullable=False)
     active = Column(db.Boolean(), default=False)
     is_admin = Column(db.Boolean(), default=False)
-    # user_picks = db.relationship('Pick', backref='user', lazy='dynamic')
+
+    picks = db.relationship('Pick', back_populates='user', lazy='dynamic')
 
     @hybrid_property
     def password(self):
@@ -61,6 +62,13 @@ class User(UserMixin, PkModel):
     def full_name(self):
         """Full user name."""
         return f"{self.first_name} {self.last_name}"
+    
+    @property
+    def score(self):
+        score = 0
+        for p in self.picks:
+            score += p.points
+        return score
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -80,8 +88,8 @@ class Pick(PkModel):
     home_team_score = db.Column(db.Integer)
     away_team_score = db.Column(db.Integer)
 
-    game = relationship('Game', foreign_keys=[game_id], backref='games_picked')
-    user = relationship('User', foreign_keys=[user_id], backref='user_picked')
+    game = relationship('Game', foreign_keys=[game_id], back_populates='picks')
+    user = relationship('User', foreign_keys=[user_id], back_populates='picks')
 
     __table_args__ = (db.UniqueConstraint('user_id', 'game_id', name='unique_user_game'),)
 
@@ -98,8 +106,29 @@ class Pick(PkModel):
             else self.game.away_team
 
     @property
+    def higher_score(self):
+        return self.home_team_score if self.home_team_score > self.away_team_score else self.away_team_score
+
+    @property
+    def lower_score(self):
+        return self.home_team_score if self.home_team_score < self.away_team_score else self.away_team_score
+
+    @property
     def pick_str(self):
         """Return the winner and score"""
-        higher_score = self.home_team_score if self.home_team_score > self.away_team_score else self.away_team_score
-        lower_score = self.home_team_score if self.home_team_score < self.away_team_score else self.away_team_score
-        return f"{self.winner.team_name} {higher_score} - {lower_score}"
+        return f"{self.winner.team_name} {self.higher_score} - {self.lower_score}"
+
+    @property
+    def points(self):
+        if self.game.status != 'Final':
+            return 0
+        if not self.winner.id == self.game.winner.id:
+            return 0
+        score = 1
+        if self.home_team_score == self.game.home_score:
+            score += 1
+        if self.away_team_score == self.game.away_score:
+            score += 1
+        if abs(self.game.margin - (self.higher_score - self.lower_score)) == self.game.closest_margin:
+            score += 1
+        return score

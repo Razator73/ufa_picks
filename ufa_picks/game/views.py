@@ -63,12 +63,7 @@ def pre_lock(week_num):
 
 def post_lock(week_num):
     week_games = Game.query.filter_by(week=week_num).order_by(Game.start_timestamp).all()
-    game_data = []
-    for g in week_games:
-        user_picks = Pick.query.filter_by(game_id=g.id).all()
-
-        game_data.append({'game': g, 'picks': user_picks})
-    return render_template('games/post_week.html', games=game_data, week_num=week_num)
+    return render_template('games/post_week.html', games=week_games, week_num=week_num)
 
 
 @blueprint.route('/week-<int:week_num>', methods=['GET', 'POST'])

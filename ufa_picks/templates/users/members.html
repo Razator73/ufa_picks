@@ -2,8 +2,26 @@
 {% extends "layout.html" %}
 {% block content %}
     <div class="container">
-        <h1>Welcome {{ current_user.username }}</h1>
-        <h3>This is the members-only page.</h3>
+        <h1>UFA Picks Leader board</h1>
+        <table>
+        <style>
+          /* Style to right-align the second column */
+          table td:nth-child(2),
+          table th:nth-child(2) {
+            text-align: right;
+          }
+        </style>
+          <tr>
+            <th>Player</th>
+            <th>Score</th>
+          </tr>
+          {% for player in players %}
+            <tr>
+              <td>{{ player.full_name }}</td>
+              <td style="text-align: right;">{{ player.score }}</td>
+            </tr>
+          {% endfor %}
+        </table>
     </div>
 {% endblock %}
 

@@ -40,3 +40,39 @@ class Game(Model):
 
     home_team = relationship('Team', foreign_keys=[home_team_id], backref='games_as_home')
     away_team = relationship('Team', foreign_keys=[away_team_id], backref='games_as_away')
+    picks = relationship('Pick', back_populates='game', lazy='dynamic')
+
+    @property
+    def winner(self):
+        """The game winner"""
+        if self.status == 'Final':
+            return self.home_team if self.home_score > self.away_score else self.away_team
+        return None
+
+    @property
+    def higher_score(self):
+        if self.home_score and self.away_score:
+            return self.home_score if self.home_score > self.away_score else self.away_score
+        return None
+
+    @property
+    def lower_score(self):
+        if self.home_score and self.away_score:
+            return self.home_score if self.home_score < self.away_score else self.away_score
+        return None
+
+    @property
+    def margin(self):
+        return self.higher_score - self.lower_score
+
+    @property
+    def closest_margin(self):
+        closest = 1000
+        for p in self.picks:
+            if p.winner.id == self.winner.id:
+                pick_margin = p.higher_score - p.lower_score
+                compare_actual = abs(self.margin - pick_margin)
+                if compare_actual == 0:
+                    return 0
+                closest = compare_actual if compare_actual < closest else closest
+        return closest

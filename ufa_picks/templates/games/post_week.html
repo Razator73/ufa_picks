@@ -10,22 +10,37 @@
     <div class="container">
         <h1>UFA Games Week {{ week_num }}</h1>
           {% for game in games %}
-            <li>{{ game['game'].away_team.team_city }} {{ game['game'].away_team.team_name }}
-              {% if game['game'].status != 'Upcoming' %}
-                - {{ game['game'].away_score }}
+            <li>
+              {%  if game.status == 'Final' and game.away_team.id == game.winner.id %}
+                <b>{{ game.away_team.team_city }} {{ game.away_team.team_name }} - {{ game.away_score }}</b>
+              {% elif game.status != 'Upcoming' %}
+                {{ game.away_team.team_city }} {{ game.away_team.team_name }} - {{ game.away_score }}
+              {% else %}
+                {{ game.away_team.team_city }} {{ game.away_team.team_name }}
               {% endif %} @
-              {{ game['game'].home_team.team_city }} {{ game['game'].home_team.team_name }}
-              {% if game['game'].status != 'Upcoming' %}
-                - {{ game['game'].home_score }} ({{ game['game'].status }})
+              {%  if game.status == 'Final' and game.home_team.id == game.winner.id %}
+                <b>{{ game.home_team.team_city }} {{ game.home_team.team_name }} - {{ game.home_score }}</b>
+              {% elif game.status != 'Upcoming' %}
+                {{ game.home_team.team_city }} {{ game.home_team.team_name }} - {{ game.home_score }}
+              {% else %}
+                {{ game.home_team.team_city }} {{ game.home_team.team_name }}
+              {% endif %}
+              {% if game.status != 'Upcoming' %}
+                ({{ game.status }})
               {% endif %}</li>
             <table>
               <tr>
-                {% for pick in game['picks'] %}
-                  <th>{{ pick.user.full_name }}</th>
+                {% for pick in game.picks %}
+                  <th>
+                    {{ pick.user.full_name }}
+                    {% if game.status == 'Final' %}
+                      - {{ pick.points }}
+                    {% endif %}
+                  </th>
                 {% endfor %}
               </tr>
               <tr>
-                {% for pick in game['picks'] %}
+                {% for pick in game.picks %}
                   <td>{{ pick.pick_str }}</td>
                 {% endfor %}
               </tr>
