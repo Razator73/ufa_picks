@@ -17,8 +17,38 @@ class Team(Model):
     team_city = Column(db.String(30), nullable=False)
     team_name = Column(db.String(30), nullable=False)
 
-    home_games = relationship('Game', foreign_keys='[Game.home_team_id]', backref='home_team_association')
-    away_games = relationship('Game', foreign_keys='[Game.away_team_id]', backref='away_team_association')
+    home_games = relationship('Game', back_populates='home_team', foreign_keys='Game.home_team_id')
+    away_games = relationship('Game', back_populates='away_team', foreign_keys='Game.away_team_id')
+
+    @property
+    def full_name(self):
+        return f'{self.team_city} {self.team_name}'
+
+    @property
+    def wins(self):
+        wins = 0
+        for game in self.home_games:
+            if game.status == 'Final' and self.id == game.winner.id:
+                wins += 1
+        for game in self.away_games:
+            if game.status == 'Final' and self.id == game.winner.id:
+                wins += 1
+        return wins
+
+    @property
+    def losses(self):
+        losses = 0
+        for game in self.home_games:
+            if game.status == 'Final' and self.id != game.winner.id:
+                losses += 1
+        for game in self.away_games:
+            if game.status == 'Final' and self.id != game.winner.id:
+                losses += 1
+        return losses
+
+    @property
+    def record(self):
+        return f'{self.wins} - {self.losses}'
 
 
 class Game(Model):
@@ -38,8 +68,8 @@ class Game(Model):
     start_timezone = Column(db.String(8))
     start_time_tbd = Column(db.Boolean())
 
-    home_team = relationship('Team', foreign_keys=[home_team_id], backref='games_as_home')
-    away_team = relationship('Team', foreign_keys=[away_team_id], backref='games_as_away')
+    home_team = relationship('Team', back_populates='home_games', foreign_keys=[home_team_id])
+    away_team = relationship('Team', back_populates='away_games', foreign_keys=[away_team_id])
     picks = relationship('Pick', back_populates='game', lazy='dynamic')
 
     @property
