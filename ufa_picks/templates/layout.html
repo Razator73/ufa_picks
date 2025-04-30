@@ -60,6 +60,7 @@
     </main>
 
     {% include "footer.html" %}
+    {{ moment.include_moment() }}
 
     <!-- JavaScript at the bottom for fast page loading -->
     <script src="{{ static_url_for('static', filename='build/main_js.bundle.js') }}"></script>

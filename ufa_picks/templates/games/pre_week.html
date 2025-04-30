@@ -5,13 +5,30 @@
         <form method="POST">
           {{ form.hidden_tag() }}
           {% for game in games %}
-            <li>{{ game['game'].away_team.full_name }} ({{ game['game'].away_team.record }}) @
-              {{ game['game'].home_team.full_name }} ({{ game['game'].home_team.record }})</li>
-              {{ game['form'].away_team_score() }} {{ game['form'].home_team_score() }}
-              {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
+            <table>
+              <tr>
+                <td>{{ game['game'].away_team.full_name }}</td>
+                <td>({{ game['game'].away_team.record }})</td>
+                <td>@</td>
+                <td>{{ game['game'].home_team.full_name }}</td>
+                <td>({{ game['game'].home_team.record }})</td>
+              </tr>
+              <tr>
+                <td>{{ game['form'].away_team_score() }}</td>
+                <td></td>
+                <td></td>
+                <td>{{ game['form'].home_team_score() }}</td>
+                <td></td>
+              </tr>
+            </table>
+            {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
+            <br>Game start: {{ moment(game['game'].start_timestamp).format('LLL') }} ({{ moment(game['game'].start_timestamp).fromNow() }})
           {% endfor %}
           <br><button type="submit" class="btn btn-primary">Submit Picks</button>
-          <p>Can be edited even after submitting up till the first game of the week starts.</p>
+          <p>
+            Can be edited even after submitting up till the first game of the week starts
+            ({{ moment(games[0]['game'].start_timestamp).fromNow() }}).
+          </p>
         </form>
     </div>
 {% endblock %}
