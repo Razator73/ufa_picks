@@ -6,7 +6,6 @@
   }
   table td {
     padding: 5px;
-    border: none;
   }
   input {
     width: 50px;
@@ -48,7 +47,7 @@
           <br><button type="submit" class="btn btn-primary">Submit Picks</button>
           <p>
             Can be edited even after submitting up till the first game of the week starts
-            ({{ moment(games[0]['game'].start_timestamp).fromNow() }}).
+            ({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }}).
           </p>
         </form>
     </div>
