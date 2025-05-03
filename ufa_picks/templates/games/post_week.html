@@ -2,6 +2,22 @@
   table th, table td {
     padding-right: 1em;
     padding-left: 1em;
+    border: 1px solid black;
+  }
+  table {
+    border-collapse: collapse;
+    width: 1500px;
+    margin-bottom: 20px;
+    border: 2px solid black;
+  }
+  table td {
+    padding: 5px;
+  }
+  table tr:nth-child(2) td {
+    border-bottom: none;
+  }
+  table tr:nth-child(3) td {
+    border-top: none;
   }
 </style>
 
@@ -10,33 +26,38 @@
     <div class="container">
         <h1>UFA Games Week {{ week_num }}</h1>
           {% for game in games %}
-            <li>
-              {%  if game.status == 'Final' and game.away_team.id == game.winner.id %}
-                <b>{{ game.away_team.full_name }} - {{ game.away_score }}</b>
-              {% elif game.status != 'Upcoming' %}
-                {{ game.away_team.full_name }} - {{ game.away_score }}
-              {% else %}
-                {{ game.away_team.full_name }}
-              {% endif %} @
-              {%  if game.status == 'Final' and game.home_team.id == game.winner.id %}
-                <b>{{ game.home_team.full_name }} - {{ game.home_score }}</b>
-              {% elif game.status != 'Upcoming' %}
-                {{ game.home_team.full_name }} - {{ game.home_score }}
-              {% else %}
-                {{ game.home_team.full_name }}
-              {% endif %}
-              {% if game.status != 'Upcoming' %}
-                ({{ game.status }})
-              {% endif %}</li>
             <table>
               <tr>
+               <td colspan="8">
+                {%  if game.status == 'Final' and game.away_team.id == game.winner.id %}
+                  <b>{{ game.away_team.full_name }} - {{ game.away_score }}</b>
+                {% elif game.status != 'Upcoming' %}
+                  {{ game.away_team.full_name }} - {{ game.away_score }}
+                {% else %}
+                  {{ game.away_team.full_name }}
+                {% endif %} @
+                {%  if game.status == 'Final' and game.home_team.id == game.winner.id %}
+                  <b>{{ game.home_team.full_name }} - {{ game.home_score }}</b>
+                {% elif game.status != 'Upcoming' %}
+                  {{ game.home_team.full_name }} - {{ game.home_score }}
+                {% else %}
+                  {{ game.home_team.full_name }}
+                {% endif %}
+                {% if game.status != 'Upcoming' %}
+                  ({{ game.status }})
+                {% else %}
+                  (starts {{ moment(game.start_timestamp).fromNow(refresh=True) }})
+                {% endif %}
+               </td>
+              </tr>
+              <tr>
                 {% for pick in game.picks %}
-                  <th>
-                    {{ pick.user.full_name }}
+                  <td>
+                    <b>{{ pick.user.full_name }}</b>
                     {% if game.status == 'Final' %}
                       - {{ pick.points }}
                     {% endif %}
-                  </th>
+                  </td>
                 {% endfor %}
               </tr>
               <tr>

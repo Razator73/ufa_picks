@@ -4,6 +4,7 @@ import logging
 import sys
 
 from flask import Flask, render_template
+from flask_moment import Moment
 
 from ufa_picks import commands, public, game, user
 from ufa_picks.extensions import (
@@ -31,6 +32,7 @@ def create_app(config_object="ufa_picks.settings"):
     register_shellcontext(app)
     register_commands(app)
     configure_logger(app)
+    Moment(app)
     return app
 
 
