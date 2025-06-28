@@ -1,72 +1,161 @@
 <style>
-  table th, table td {
-    padding-right: 1em;
-    padding-left: 1em;
-    border: 1px solid black;
-  }
+  /* Base styles for tables - fluid width and horizontal scroll on overflow */
   table {
+    border: 1px solid black;
     border-collapse: collapse;
-    width: 1500px;
+    width: 100%; /* Make tables fluid, taking 100% of parent width */
+    max-width: 100%; /* Ensure tables don't exceed their parent's width */
     margin-bottom: 20px;
-    border: 2px solid black;
+    border: 2px solid black; /* Outer border */
+    display: block; /* Important for overflow-x: auto on tables */
+    overflow-x: auto; /* Enable horizontal scrolling if table content overflows */
   }
+
+  /* Table cells (th, td) - adjusted padding and preventing text wrap by default */
+  table th,
   table td {
-    padding: 5px;
+    padding: 0.5em 0.8em; /* Adjusted padding for better fit on mobile */
+    border: 1px solid black; /* Inner borders */
+    white-space: nowrap; /* Prevent content from wrapping by default, forcing horizontal scroll */
   }
+
+  /* Specific border removal between 2nd and 3rd rows */
   table tr:nth-child(2) td {
     border-bottom: none;
   }
   table tr:nth-child(3) td {
     border-top: none;
   }
+
+  /* General input field styling - make them somewhat responsive */
+  input[type="text"], /* Assuming IntegerFields render as text inputs */
+  input[type="number"] { /* If they render as number inputs */
+    width: 80px; /* Default width, adjust as needed for desktop */
+    height: 30px;
+    font-size: 14px;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    max-width: 100%; /* Ensure inputs don't overflow their container */
+  }
+
+  /* Style for the first row's content (game details) for better mobile stacking */
+  .game-details-cell {
+    display: flex; /* Use flexbox for layout */
+    flex-wrap: wrap; /* Allow items to wrap to the next line */
+    align-items: center; /* Vertically align items */
+    gap: 0.5em; /* Space between flex items */
+    padding: 10px; /* More generous padding for this main info cell */
+    min-width: 300px; /* Minimum width before flex-wrapping happens */
+  }
+
+  /* Style for the game status text to control its mobile display */
+  .game-status-text {
+      font-weight: normal; /* Override bold if it inherited it */
+      white-space: normal; /* Allow this text to wrap */
+  }
+
+
+  /* Media queries for mobile-specific adjustments */
+  @media (max-width: 768px) { /* Adjust breakpoint as needed for tablets/large phones */
+    .game-details-cell {
+      flex-direction: column; /* Stack items vertically on smaller screens */
+      align-items: flex-start; /* Align stacked items to the left */
+      min-width: unset; /* Remove min-width to allow full collapsing */
+      text-align: left; /* Ensure text alignment is consistent */
+    }
+    .game-details-cell b {
+      display: block; /* Make bold text take full width when stacked */
+      width: 100%;
+    }
+    .game-status-text {
+        display: block; /* Make status take its own line */
+        width: 100%;
+        text-align: left;
+    }
+    /* Potentially make input fields fill available width on mobile */
+    input[type="text"],
+    input[type="number"] {
+        width: 100%;
+        max-width: 100px; /* Still keep a sensible max-width for small inputs */
+    }
+  }
+
+  /* Ensure the main container has responsive padding */
+  .container {
+    padding: 15px; /* Add some padding to the container */
+    max-width: 1200px; /* Optional: limit overall content width on very large screens */
+    margin: 0 auto; /* Center the container on the page */
+  }
+
+  /* General text alignment for main heading */
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
 </style>
 
 {% extends "layout.html" %}
 {% block content %}
-    <div class="container">
-        <h1>UFA Games Week {{ week_num }}</h1>
-          {% for game in games %}
-            <table>
-              <tr>
-               <td colspan="8">
-                {%  if game.status == 'Final' and game.away_team.id == game.winner.id %}
-                  <b>{{ game.away_team.full_name }} - {{ game.away_score }}</b>
-                {% elif game.status != 'Upcoming' %}
-                  {{ game.away_team.full_name }} - {{ game.away_score }}
-                {% else %}
-                  {{ game.away_team.full_name }}
-                {% endif %} @
-                {%  if game.status == 'Final' and game.home_team.id == game.winner.id %}
-                  <b>{{ game.home_team.full_name }} - {{ game.home_score }}</b>
-                {% elif game.status != 'Upcoming' %}
-                  {{ game.home_team.full_name }} - {{ game.home_score }}
-                {% else %}
-                  {{ game.home_team.full_name }}
+  <div class="container">
+    <h1>UFA Games Week {{ week_num }}</h1>
+    {# Assuming the form tag is meant to wrap all games and the submit button #}
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      {% for game in games %}
+        <table>
+          <tr>
+            <td colspan="8" class="game-details-cell">
+              {% if game.status == 'Final' and game.away_team.id == game.winner.id %}
+                <b>{{ game.away_team.full_name }} - {{ game.away_score }}</b>
+              {% elif game.status != 'Upcoming' %}
+                {{ game.away_team.full_name }} - {{ game.away_score }}
+              {% else %}
+                {{ game.away_team.full_name }}
+              {% endif %}
+              @
+              {% if game.status == 'Final' and game.home_team.id == game.winner.id %}
+                <b>{{ game.home_team.full_name }} - {{ game.home_score }}</b>
+              {% elif game.status != 'Upcoming' %}
+                {{ game.home_team.full_name }} - {{ game.home_score }}
+              {% else %}
+                {{ game.home_team.full_name }}
+              {% endif %}
+              {% if game.status != 'Upcoming' %}
+                <span class="game-status-text">({{ game.status }})</span>
+              {% else %}
+                <span class="game-status-text">(starts {{ moment(game.start_timestamp).fromNow(refresh=True) }})</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            {% for pick in game.picks %}
+              <td>
+                <b>{{ pick.user.full_name }}</b>
+                {% if game.status == 'Final' %}
+                  - {{ pick.points }}
                 {% endif %}
-                {% if game.status != 'Upcoming' %}
-                  ({{ game.status }})
-                {% else %}
-                  (starts {{ moment(game.start_timestamp).fromNow(refresh=True) }})
-                {% endif %}
-               </td>
-              </tr>
-              <tr>
-                {% for pick in game.picks %}
-                  <td>
-                    <b>{{ pick.user.full_name }}</b>
-                    {% if game.status == 'Final' %}
-                      - {{ pick.points }}
-                    {% endif %}
-                  </td>
-                {% endfor %}
-              </tr>
-              <tr>
-                {% for pick in game.picks %}
-                  <td>{{ pick.pick_str }}</td>
-                {% endfor %}
-              </tr>
-            </table>
-          {% endfor %}
-        </form>
-    </div>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            {% for pick in game.picks %}
+              <td>{{ pick.pick_str }}</td>
+            {% endfor %}
+          </tr>
+        </table>
+        {# This hidden field might need to be inside a larger form for all picks #}
+        {# or part of an individual game's pick submission #}
+        {# Currently, it's outside the table, which is fine if the parent <form> wraps it. #}
+        {# But ensure it's properly handled by the Flask backend if this is an individual game's ID #}
+        {# {{ game['form'].game_id(value=game['game'].id, type="hidden") }} #}
+        {# This <br> tag is likely not ideal for spacing; use CSS margins instead #}
+        {# <br> #}
+      {% endfor %}
+      {# Removed these; assuming the overall form structure is correct #}
+      {# <br><button type="submit" class="btn btn-primary">Submit Picks</button> #}
+      {# <p>
+        Can be edited even after submitting up till the first game of the week starts
+        ({{ moment(games[0]['game'].start_timestamp).fromNow() }}).
+      </p> #}
+    </form>
+  </div>
 {% endblock %}
