@@ -50,6 +50,28 @@ class Team(Model):
     def record(self):
         return f'{self.wins} - {self.losses}'
 
+    @property
+    def goals_for(self):
+        goals = 0
+        for game in self.home_games:
+            goals += game.home_score
+        for game in self.away_games:
+            goals += game.away_score
+        return goals
+
+    @property
+    def goals_against(self):
+        goals = 0
+        for game in self.home_games:
+            goals += game.away_score
+        for game in self.away_games:
+            goals += game.home_score
+        return goals
+
+    @property
+    def goal_differential(self):
+        return self.goals_for - self.goals_against
+
 
 class Game(Model):
     """ Store game info """
