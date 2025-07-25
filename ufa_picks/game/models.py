@@ -16,9 +16,11 @@ class Team(Model):
     id = Column(db.String(30), primary_key=True)
     team_city = Column(db.String(30), nullable=False)
     team_name = Column(db.String(30), nullable=False)
+    division = Column(db.String(8))
 
     home_games = relationship('Game', back_populates='home_team', foreign_keys='Game.home_team_id')
     away_games = relationship('Game', back_populates='away_team', foreign_keys='Game.away_team_id')
+    playoff_info = relationship('PlayoffTeam', back_populates='team', uselist=False)
 
     @property
     def full_name(self):
@@ -71,6 +73,7 @@ class Game(Model):
     home_team = relationship('Team', back_populates='home_games', foreign_keys=[home_team_id])
     away_team = relationship('Team', back_populates='away_games', foreign_keys=[away_team_id])
     picks = relationship('Pick', back_populates='game', lazy='dynamic')
+    playoff_info = relationship('PlayoffGame', back_populates='game', uselist=False)
 
     @property
     def winner(self):
