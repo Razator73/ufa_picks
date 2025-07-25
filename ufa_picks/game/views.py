@@ -19,7 +19,7 @@ blueprint = Blueprint("game", __name__, url_prefix="/games", static_folder="../s
 def main():
     """List weeks."""
     weeks = Game.query.with_entities(Game.week).distinct().order_by(Game.week).all()
-    weeks = [w[0] for w in weeks]
+    weeks = [w[0] for w in weeks][:13]
     return render_template("games/games.html", weeks=weeks)
 
 
@@ -69,6 +69,8 @@ def post_lock(week_num):
 @blueprint.route('/week-<int:week_num>', methods=['GET', 'POST'])
 @login_required
 def week(week_num):
+    if week_num > 13:
+        return render_template('games/post_season.html')
     first_game = Game.query.filter_by(week=week_num).order_by(Game.start_timestamp).first()
     lock = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) > first_game.start_timestamp
     if lock:
