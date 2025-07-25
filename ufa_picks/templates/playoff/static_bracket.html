@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="container">
+        <h1>Bracket for {{ player.full_name }}</h1>
+        {% if player.id == 6 %}
+          <p>Switch Boston and Atlanta at championship weekend in the semis</p>
+        {% endif %}
+        <img src="{{ static_url_for('static', filename='build/' + (player.first_name | lower) + '_bracket.jpeg') }}">
+    </div>
+{% endblock %}

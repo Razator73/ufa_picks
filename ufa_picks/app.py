@@ -6,7 +6,7 @@ import sys
 from flask import Flask, render_template
 from flask_moment import Moment
 
-from ufa_picks import commands, public, game, user
+from ufa_picks import commands, public, game, playoff, user
 from ufa_picks.extensions import (
     bcrypt,
     cache,
@@ -54,6 +54,7 @@ def register_blueprints(app):
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(game.views.blueprint)
     app.register_blueprint(user.views.blueprint)
+    app.register_blueprint(playoff.views.blueprint)
     return None
 
 
@@ -76,7 +77,12 @@ def register_shellcontext(app):
 
     def shell_context():
         """Shell context objects."""
-        return {"db": db, "User": user.models.User, "Game": game.models.Game}
+        return {
+            "db": db,
+            "User": user.models.User,
+            "Game": game.models.Game,
+            "PlayoffTeam": playoff.models.PlayoffTeam
+        }
 
     app.shell_context_processor(shell_context)
 
