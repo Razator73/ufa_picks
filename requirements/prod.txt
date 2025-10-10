@@ -9,7 +9,7 @@ flask-moment==1.0.6
 # Database
 Flask-SQLAlchemy==3.1.1
 psycopg2-binary==2.9.10
-SQLAlchemy==2.0.40
+SQLAlchemy==2.0.44
 
 # Migrations
 Flask-Migrate==4.1.0
