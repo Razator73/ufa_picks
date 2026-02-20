@@ -99,6 +99,7 @@
     <h1>UFA Games Week {{ week_num }}</h1>
     {# Assuming the form tag is meant to wrap all games and the submit button #}
     <form method="POST">
+      {{ form.hidden_tag() }}
       {% for game in games %}
         <table>
           <tr>
