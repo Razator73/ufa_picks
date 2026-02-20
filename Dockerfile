@@ -37,6 +37,7 @@ ENV PATH="/home/sid/.local/bin:${PATH}"
 
 COPY --from=builder --chown=sid:sid /app/ufa_picks/static /app/ufa_picks/static
 COPY requirements requirements
+RUN pip install --no-cache-dir setuptools
 RUN pip install --no-cache --user -r requirements/prod.txt
 
 COPY supervisord.conf /etc/supervisor/supervisord.conf
