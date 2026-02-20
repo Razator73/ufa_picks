@@ -63,12 +63,20 @@ class User(UserMixin, PkModel):
         """Full user name."""
         return f"{self.first_name} {self.last_name}"
     
-    @property
-    def score(self):
+    def get_score(self, year=None):
+        if year is None:
+            year = str(dt.datetime.now().year)
+        else:
+            year = str(year)
         score = 0
         for p in self.picks:
-            score += p.points
+            if p.game.season == year:
+                score += p.points
         return score
+
+    @property
+    def score(self):
+        return self.get_score()
 
     def __repr__(self):
         """Represent instance as a unique string."""
