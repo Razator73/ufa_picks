@@ -1,26 +1,155 @@
+
 {% extends "layout.html" %}
-{% block content %}
-    <div class="container">
-        <h1>UFA Picks Playoff Leader board</h1>
-        <table>
-        <style>
-          /* Style to right-align the second column */
-          table td:nth-child(2),
-          table th:nth-child(2) {
-            text-align: right;
-          }
-        </style>
-          <tr>
-            <th>Player</th>
-            <th>Score</th>
-          </tr>
-          {% for player in players %}
-            <tr>
-              <td><a href="{{ url_for('playoff.bracket', user_id=player.id) }}">
-                {{ player.full_name }}</a></td>
-              <td style="text-align: right;">0</td>
-            </tr>
-          {% endfor %}
-        </table>
-    </div>
+{% block css %}
+<style>
+    /* Remove background image from body, keep other body styles if needed for overall layout */
+    body {
+        min-height: 100vh; /* Ensure the body takes at least the full viewport height */
+        margin: 0; /* Remove default body margin */
+        padding: 0; /* Remove default body padding */
+        /* Optional: Set a default font or text color if needed for readability over the background */
+        /* font-family: sans-serif; */
+        /* color: #333; */
+    }
+
+    /* Apply overlay to main content area for readability */
+    main {
+        background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent white */
+        /* Adjust min-height based on your header/footer, or remove if not needed */
+        min-height: calc(100vh - 100px);
+        padding-top: 100px;
+        padding-bottom: 20px;
+    }
+
+    /* Apply background image directly to the container-narrow div */
+    .container-narrow {
+        background-image: url('{{ static_url_for('static', filename='build/ufa_bracket.png') }}'); /* Your image URL */
+        background-size: cover; /* Make the image cover the entire element */
+        background-position: center center; /* Center the image */
+        background-repeat: no-repeat; /* Ensure the image does NOT repeat */
+        background-attachment: scroll; /* Image scrolls with the div content */
+
+        /* Adjusted dimensions based on your image */
+        max-width: 1400px; /* Set width to match image width */
+        height: 1194px; /* Set min-height to match image height */
+
+        /* Ensure the div itself has some padding and max-width if it's your main content area */
+        padding: 20px;
+        margin: 20px auto; /* Example margin to center it and give space from edges */
+        /* max-width: 960px; Removed as we're setting a fixed width */
+        border-radius: 8px; /* Optional: rounded corners for the div */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow */
+    }
+
+    /* Styles for the tables within the container-narrow */
+    .bracket-table {
+        border-collapse: collapse; /* Collapse borders for a cleaner look */
+        width: 650px; /* Example width for each table, adjust as needed */
+        table-layout: fixed; /* Ensures column widths are respected */
+        /* Padding between the two tables */
+        margin-bottom: 30px; /* Space below the first table */
+        margin-top: 30px; /* Space above the second table */
+        /* Optional: Add a subtle border around each table if desired */
+        /* border: 1px solid #ccc; */
+    }
+
+    /* Padding for all cells (th and td) */
+    .bracket-table th,
+    .bracket-table td {
+        padding: 8px 12px; /* Top/bottom padding: 8px, Left/right padding: 12px */
+        text-align: left; /* Default alignment, adjust per column if needed */
+        /* Optional: Add inner cell borders if desired */
+        /* border: 1px solid #eee; */
+    }
+
+    /* Example: Specific padding for a column (e.g., if you want more space for scores) */
+    .bracket-table .col-score {
+        padding-right: 20px; /* More padding on the right for score column */
+        text-align: right; /* Example: right-align scores */
+    }
+
+    /* Example: Specific padding for a row */
+    .bracket-table .row-header th {
+        padding-bottom: 15px; /* More padding below header row */
+    }
+
+    /* You can add more specific classes for fine-grained control */
+
+</style>
 {% endblock %}
+
+{% block content %}
+  <h1 align="center">Bracket</h1>
+<div class="container-narrow">
+
+  <!-- First Table -->
+  <table class="bracket-table" style="position: absolute; top: 200px; left: 100px;">
+    <thead>
+      <tr class="row-header">
+        <th>Team Name</th>
+        <th class="col-score">Score</th>
+        <th>Record</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>NY</td>
+        <td class="col-score">12</td>
+        <td>7-5</td>
+      </tr>
+      <tr>
+        <td>DC</td>
+        <td class="col-score">8</td>
+        <td>7-5</td>
+      </tr>
+      <tr>
+        <td>BOS</td>
+        <td class="col-score">15</td>
+        <td>9-3</td>
+      </tr>
+      <tr>
+        <td>OAK</td>
+        <td class="col-score">10</td>
+        <td>9-3</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Second Table -->
+  <table class="bracket-table" style="position: absolute; top: 200px; left: 800px;">
+    <thead>
+      <tr class="row-header">
+        <th>Team Name</th>
+        <th class="col-score">Score</th>
+        <th>Record</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>SD</td>
+        <td class="col-score">18</td>
+        <td>7-5</td>
+      </tr>
+      <tr>
+        <td>ATX</td>
+        <td class="col-score">14</td>
+        <td>9-3</td>
+      </tr>
+      <tr>
+        <td>ATL</td>
+        <td class="col-score">20</td>
+        <td>9-3</td>
+      </tr>
+      <tr>
+        <td>CHI</td>
+        <td class="col-score">22</td>
+        <td>12-0</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- You would place more tables or other content here as needed for the bracket layout -->
+
+</div>
+{% endblock %}
+
