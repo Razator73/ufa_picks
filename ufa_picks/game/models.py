@@ -69,6 +69,7 @@ class Game(Model):
     start_timestamp = Column(db.DateTime)
     start_timezone = Column(db.String(8))
     start_time_tbd = Column(db.Boolean())
+    season = Column(db.String(4), nullable=True)
 
     home_team = relationship('Team', back_populates='home_games', foreign_keys=[home_team_id])
     away_team = relationship('Team', back_populates='away_games', foreign_keys=[away_team_id])
