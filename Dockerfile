@@ -13,6 +13,7 @@ COPY --from=node /usr/lib/ /usr/lib/
 RUN true
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
 COPY requirements requirements
+RUN pip install --no-cache-dir setuptools
 RUN pip install --no-cache -r requirements/prod.txt
 
 COPY package.json ./
