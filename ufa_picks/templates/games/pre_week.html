@@ -4,14 +4,17 @@
     border-collapse: collapse;
     width: 500px;
   }
+
   table td {
     padding: 5px;
   }
+
   input {
     width: 50px;
     height: 30px;
     font-size: 14px;
   }
+
   .right-align {
     text-align: right;
   }
@@ -19,36 +22,107 @@
 
 {% extends "layout.html" %}
 {% block content %}
-    <div class="container">
-        <h1>UFA Games Week {{ week_num }}</h1>
-        <form method="POST">
-          {{ form.hidden_tag() }}
-          {% for game in games %}
-            <table>
-              <tr>
-                <td>{{ game['game'].away_team.full_name }} ({{ game['game'].away_team.record }})</td>
-                <td>@</td>
-                <td class="right-align">{{ game['game'].home_team.full_name }} ({{ game['game'].home_team.record }})</td>
-              </tr>
-              <tr>
-                <td>{{ game['form'].away_team_score() }}</td>
-                <td></td>
-                <td class="right-align">{{ game['form'].home_team_score() }}</td>
-              </tr>
-              <tr>
-                <td colspan="3" class="right-align">
-                  Game start: {{ moment(game['game'].start_timestamp).format('LLL') }} ({{ moment(game['game'].start_timestamp).fromNow() }})
-                </td>
-              </tr>
-            </table>
-            {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
-            <br>
-          {% endfor %}
-          <br><button type="submit" class="btn btn-primary">Submit Picks</button>
-          <p>
-            Can be edited even after submitting up till the first game of the week starts
-            ({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }}).
-          </p>
-        </form>
+<div class="container">
+  <h1>UFA Games Week {{ week_num }}</h1>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    {% for game in games %}
+    <div class="game-container" data-game-id="{{ game['game'].id }}">
+      <table>
+        <tr>
+          <td>{{ game['game'].away_team.full_name }} ({{ game['game'].away_team.record }})</td>
+          <td>@</td>
+          <td class="right-align">{{ game['game'].home_team.full_name }} ({{ game['game'].home_team.record }})</td>
+        </tr>
+        <tr>
+          <td>{{ game['form'].away_team_score() }}</td>
+          <td></td>
+          <td class="right-align">{{ game['form'].home_team_score() }}</td>
+        </tr>
+        <tr>
+          <td colspan="3" class="right-align">
+            Game start: {{ moment(game['game'].start_timestamp).format('LLL') }} ({{
+            moment(game['game'].start_timestamp).fromNow() }})
+          </td>
+        </tr>
+      </table>
+      {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
+      <span class="save-status"
+        style="color: green; font-weight: bold; margin-left: 10px; opacity: 0; transition: opacity 0.5s;">Saved!</span>
     </div>
+    <br>
+    {% endfor %}
+    <p>
+      Can be edited even after submitting up till the first game of the week starts
+      ({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }}).
+    </p>
+  </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Get CSRF token
+    const csrfTokenInput = document.querySelector('input[name="token-csrf_token"]') || document.querySelector('input[name="csrf_token"]');
+    const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
+    const gameContainers = document.querySelectorAll('.game-container');
+    const updateUrlBase = "{{ url_for('game.update_pick', game_id=0) }}";
+
+    gameContainers.forEach(container => {
+      const gameId = container.getAttribute('data-game-id');
+      const fetchUrl = updateUrlBase.replace('/0', '/' + gameId);
+      const inputs = container.querySelectorAll('input[type="number"], input[type="text"]');
+      const statusSpan = container.querySelector('.save-status');
+
+      inputs.forEach(input => {
+        input.addEventListener('change', () => {
+          let homeScore = '';
+          let awayScore = '';
+
+          inputs.forEach(gi => {
+            if (gi.name.includes('home_team_score')) homeScore = gi.value;
+            if (gi.name.includes('away_team_score')) awayScore = gi.value;
+          });
+
+          // Show saving indicator
+          statusSpan.innerText = 'Saving...';
+          statusSpan.style.color = '#0d6efd'; // Bootstrap info blue
+          statusSpan.style.opacity = '1';
+
+          fetch(fetchUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+              home_team_score: homeScore,
+              away_team_score: awayScore
+            })
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'success') {
+                statusSpan.innerText = 'Saved!';
+                statusSpan.style.color = 'green';
+                setTimeout(() => {
+                  statusSpan.style.opacity = '0';
+                }, 2000);
+              } else {
+                statusSpan.innerText = 'Error: ' + data.message;
+                statusSpan.style.color = 'red';
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              statusSpan.innerText = 'Error saving';
+              statusSpan.style.color = 'red';
+            });
+        });
+      });
+    });
+  });
+</script>
 {% endblock %}
