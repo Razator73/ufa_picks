@@ -4,14 +4,17 @@
     border-collapse: collapse;
     width: 500px;
   }
+
   table td {
     padding: 5px;
   }
+
   input {
     width: 50px;
     height: 30px;
     font-size: 14px;
   }
+
   .right-align {
     text-align: right;
   }
@@ -19,36 +22,37 @@
 
 {% extends "layout.html" %}
 {% block content %}
-    <div class="container">
-        <h1>UFA Games Week {{ week_num }}</h1>
-        <form method="POST">
-          {{ form.hidden_tag() }}
-          {% for game in games %}
-            <table>
-              <tr>
-                <td>{{ game['game'].away_team.full_name }} ({{ game['game'].away_team.record }})</td>
-                <td>@</td>
-                <td class="right-align">{{ game['game'].home_team.full_name }} ({{ game['game'].home_team.record }})</td>
-              </tr>
-              <tr>
-                <td>{{ game['form'].away_team_score() }}</td>
-                <td></td>
-                <td class="right-align">{{ game['form'].home_team_score() }}</td>
-              </tr>
-              <tr>
-                <td colspan="3" class="right-align">
-                  Game start: {{ moment(game['game'].start_timestamp).format('LLL') }} ({{ moment(game['game'].start_timestamp).fromNow() }})
-                </td>
-              </tr>
-            </table>
-            {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
-            <br>
-          {% endfor %}
-          <br><button type="submit" class="btn btn-primary">Submit Picks</button>
-          <p>
-            Can be edited even after submitting up till the first game of the week starts
-            ({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }}).
-          </p>
-        </form>
-    </div>
+<div class="container">
+  <h1>UFA Games Week {{ week_num }}</h1>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    {% for game in games %}
+    <table>
+      <tr>
+        <td>{{ game['game'].away_team.full_name }} ({{ game['game'].away_team.record(year) }})</td>
+        <td>@</td>
+        <td class="right-align">{{ game['game'].home_team.full_name }} ({{ game['game'].home_team.record(year) }})</td>
+      </tr>
+      <tr>
+        <td>{{ game['form'].away_team_score() }}</td>
+        <td></td>
+        <td class="right-align">{{ game['form'].home_team_score() }}</td>
+      </tr>
+      <tr>
+        <td colspan="3" class="right-align">
+          Game start: {{ moment(game['game'].start_timestamp).format('LLL') }} ({{
+          moment(game['game'].start_timestamp).fromNow() }})
+        </td>
+      </tr>
+    </table>
+    {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
+    <br>
+    {% endfor %}
+    <br><button type="submit" class="btn btn-primary">Submit Picks</button>
+    <p>
+      Can be edited even after submitting up till the first game of the week starts
+      ({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }}).
+    </p>
+  </form>
+</div>
 {% endblock %}
