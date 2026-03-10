@@ -24,31 +24,30 @@ class Team(Model):
     def full_name(self):
         return f'{self.team_city} {self.team_name}'
 
-    @property
-    def wins(self):
+    def wins(self, season):
         wins = 0
+        season_str = str(season)
         for game in self.home_games:
-            if game.status == 'Final' and self.id == game.winner.id:
+            if game.season == season_str and game.status == 'Final' and self.id == game.winner.id:
                 wins += 1
         for game in self.away_games:
-            if game.status == 'Final' and self.id == game.winner.id:
+            if game.season == season_str and game.status == 'Final' and self.id == game.winner.id:
                 wins += 1
         return wins
 
-    @property
-    def losses(self):
+    def losses(self, season):
         losses = 0
+        season_str = str(season)
         for game in self.home_games:
-            if game.status == 'Final' and self.id != game.winner.id:
+            if game.season == season_str and game.status == 'Final' and self.id != game.winner.id:
                 losses += 1
         for game in self.away_games:
-            if game.status == 'Final' and self.id != game.winner.id:
+            if game.season == season_str and game.status == 'Final' and self.id != game.winner.id:
                 losses += 1
         return losses
 
-    @property
-    def record(self):
-        return f'{self.wins} - {self.losses}'
+    def record(self, season):
+        return f'{self.wins(season)} - {self.losses(season)}'
 
 
 class Game(Model):
