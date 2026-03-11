@@ -87,10 +87,14 @@
             if (gi.name.includes('away_team_score')) awayScore = gi.value;
           });
 
-          // Show saving indicator
-          statusSpan.innerText = 'Saving...';
-          statusSpan.style.color = '#0d6efd'; // Bootstrap info blue
-          statusSpan.style.opacity = '1';
+          const bothFilled = (homeScore !== '' && awayScore !== '');
+
+          if (bothFilled) {
+            // Show saving indicator
+            statusSpan.innerText = 'Saving...';
+            statusSpan.style.color = '#0d6efd'; // Bootstrap info blue
+            statusSpan.style.opacity = '1';
+          }
 
           fetch(fetchUrl, {
             method: 'POST',
@@ -106,20 +110,26 @@
             .then(response => response.json())
             .then(data => {
               if (data.status === 'success') {
-                statusSpan.innerText = 'Saved!';
-                statusSpan.style.color = 'green';
-                setTimeout(() => {
-                  statusSpan.style.opacity = '0';
-                }, 2000);
+                if (bothFilled) {
+                  statusSpan.innerText = 'Saved!';
+                  statusSpan.style.color = 'green';
+                  setTimeout(() => {
+                    statusSpan.style.opacity = '0';
+                  }, 2000);
+                }
               } else {
-                statusSpan.innerText = 'Error: ' + data.message;
-                statusSpan.style.color = 'red';
+                if (bothFilled) {
+                  statusSpan.innerText = 'Error: ' + data.message;
+                  statusSpan.style.color = 'red';
+                }
               }
             })
             .catch(error => {
               console.error('Error:', error);
-              statusSpan.innerText = 'Error saving';
-              statusSpan.style.color = 'red';
+              if (bothFilled) {
+                statusSpan.innerText = 'Error saving';
+                statusSpan.style.color = 'red';
+              }
             });
         });
       });
