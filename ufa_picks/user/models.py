@@ -63,14 +63,14 @@ class User(UserMixin, PkModel):
         """Full user name."""
         return f"{self.first_name} {self.last_name}"
 
-    def _get_score_2025(self):
+    def _get_score_2025(self, year):
         score = 0
         for p in self.picks:
             if p.game.season == year:
                 score += p.points
         return score
 
-    def _get_score_2026(self):
+    def _get_score_2026(self, year):
         # 2026 and later logic: drop lowest regular season week if > 1 played.
         week_scores = {}
         playoff_score = 0
