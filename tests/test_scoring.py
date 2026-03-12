@@ -236,4 +236,3 @@ class TestScoring2025:
         
         score = user.get_score(year=2025)
         assert score == 5
-
