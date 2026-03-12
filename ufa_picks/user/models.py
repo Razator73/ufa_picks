@@ -62,6 +62,35 @@ class User(UserMixin, PkModel):
     def full_name(self):
         """Full user name."""
         return f"{self.first_name} {self.last_name}"
+
+    def _get_score_2025(self):
+        score = 0
+        for p in self.picks:
+            if p.game.season == year:
+                score += p.points
+        return score
+
+    def _get_score_2026(self):
+        # 2026 and later logic: drop lowest regular season week if > 1 played.
+        week_scores = {}
+        playoff_score = 0
+
+        for p in self.picks:
+            if p.game.season == year:
+                # Determine if it's a regular season week (<= 13) or playoff (> 13)
+                if p.game.week <= 13:
+                    week_scores[p.game.week] = week_scores.get(p.game.week, 0) + p.points
+                else:
+                    playoff_score += p.points
+
+        total_score = sum(week_scores.values()) + playoff_score
+
+        # Drop the lowest regular season week if they participated in at least 2 weeks
+        if len(week_scores) > 1:
+            lowest_week = min(week_scores.values())
+            total_score -= lowest_week
+
+        return total_score
     
     def get_score(self, year=None):
         if year is None:
@@ -69,37 +98,12 @@ class User(UserMixin, PkModel):
         else:
             year = str(year)
 
-        if int(year) < 2026:
-            score = 0
-            for p in self.picks:
-                if p.game.season == year:
-                    score += p.points
-            return score
+        if year == '2025':
+            return self._get_score_2025(year)
+        elif year == '2026':
+            return self._get_score_2026(year)
         else:
-            # 2026 and later logic: drop lowest regular season week if > 1 played.
-            week_scores = {}
-            playoff_score = 0
-
-            for p in self.picks:
-                if p.game.season == year:
-                    # Determine if it's a regular season week (<= 13) or playoff (> 13)
-                    if p.game.week <= 13:
-                        week_scores[p.game.week] = week_scores.get(p.game.week, 0) + p.points
-                    else:
-                        playoff_score += p.points
-
-            total_score = sum(week_scores.values()) + playoff_score
-
-            # Drop the lowest regular season week if they participated in at least 2 weeks
-            if len(week_scores) > 1:
-                lowest_week = min(week_scores.values())
-                total_score -= lowest_week
-
-            return total_score
-
-    @property
-    def score(self):
-        return self.get_score()
+            return 0
 
     def __repr__(self):
         """Represent instance as a unique string."""
