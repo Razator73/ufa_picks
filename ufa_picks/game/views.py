@@ -2,7 +2,7 @@
 """Game views."""
 import datetime as dt
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import current_user, login_required
 
 from ufa_picks.extensions import db
@@ -64,6 +64,42 @@ def pre_lock(year, week_num):
         return redirect(url_for('.week', week_num=week_num, year=year))
 
     return render_template('games/pre_week.html', games=games_with_forms, week_num=week_num, year=year, form=token_form)
+
+@blueprint.route('/update_pick/<string:game_id>', methods=['POST'])
+@login_required
+def update_pick(game_id):
+    game = Game.query.get_or_404(game_id)
+
+    if dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) > game.start_timestamp:
+        return jsonify({"status": "error", "message": "Game has already started."}), 400
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "Invalid data."}), 400
+
+    try:
+        home_score = data.get('home_team_score')
+        away_score = data.get('away_team_score')
+
+        home_score = int(home_score) if home_score not in [None, ''] else None
+        away_score = int(away_score) if away_score not in [None, ''] else None
+
+        if (home_score is not None and home_score < 0) or (away_score is not None and away_score < 0):
+            return jsonify({"status": "error", "message": "Scores must be non-negative."}), 400
+    except ValueError:
+        return jsonify({"status": "error", "message": "Scores must be integers."}), 400
+
+    pick = Pick.query.filter_by(user_id=current_user.id, game_id=game_id).first()
+    if pick:
+        pick.home_team_score = home_score
+        pick.away_team_score = away_score
+    else:
+        pick = Pick(user_id=current_user.id, game_id=game_id,
+                    home_team_score=home_score, away_team_score=away_score)
+        db.session.add(pick)
+
+    db.session.commit()
+    return jsonify({"status": "success", "message": "Pick saved."})
 
 
 def post_lock(year, week_num):
