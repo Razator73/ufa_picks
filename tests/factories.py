@@ -22,6 +22,8 @@ class UserFactory(BaseFactory):
 
     username = Sequence(lambda n: f"user{n}")
     email = Sequence(lambda n: f"user{n}@example.com")
+    first_name = Sequence(lambda n: f"First{n}")
+    last_name = Sequence(lambda n: f"Last{n}")
     active = True
 
     class Meta:

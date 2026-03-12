@@ -62,21 +62,48 @@ class User(UserMixin, PkModel):
     def full_name(self):
         """Full user name."""
         return f"{self.first_name} {self.last_name}"
-    
-    def get_score(self, year=None):
-        if year is None:
-            year = str(dt.datetime.now().year)
-        else:
-            year = str(year)
+
+    def _get_score_2025(self, year):
         score = 0
         for p in self.picks:
             if p.game.season == year:
                 score += p.points
         return score
 
-    @property
-    def score(self):
-        return self.get_score()
+    def _get_score_2026(self, year):
+        # 2026 and later logic: drop lowest regular season week if > 1 played.
+        week_scores = {}
+        playoff_score = 0
+
+        for p in self.picks:
+            if p.game.season == year:
+                # Determine if it's a regular season week (<= 13) or playoff (> 13)
+                if p.game.week <= 13:
+                    week_scores[p.game.week] = week_scores.get(p.game.week, 0) + p.points
+                else:
+                    playoff_score += p.points
+
+        total_score = sum(week_scores.values()) + playoff_score
+
+        # Drop the lowest regular season week if they participated in at least 2 weeks
+        if len(week_scores) > 1:
+            lowest_week = min(week_scores.values())
+            total_score -= lowest_week
+
+        return total_score
+    
+    def get_score(self, year=None):
+        if year is None:
+            year = str(dt.datetime.now().year)
+        else:
+            year = str(year)
+
+        if year == '2025':
+            return self._get_score_2025(year)
+        elif year == '2026':
+            return self._get_score_2026(year)
+        else:
+            return 0
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -126,12 +153,7 @@ class Pick(PkModel):
         """Return the winner and score"""
         return f"{self.winner.team_name} {self.higher_score} - {self.lower_score}"
 
-    @property
-    def points(self):
-        if self.game.status != 'Final':
-            return 0
-        if not self.winner.id == self.game.winner.id:
-            return 0
+    def _points_2025(self):
         score = 1
         if self.home_team_score == self.game.home_score:
             score += 1
@@ -140,3 +162,26 @@ class Pick(PkModel):
         if abs(self.game.margin - (self.higher_score - self.lower_score)) == self.game.closest_margin:
             score += 1
         return score
+
+    def _points_2026(self):
+        score = 3
+        if self.home_team_score == self.game.home_score:
+            score += 1
+        if self.away_team_score == self.game.away_score:
+            score += 1
+        if (self.higher_score - self.lower_score) == self.game.margin:
+            score += 1
+        return score
+
+    @property
+    def points(self):
+        if self.game.status != 'Final':
+            return 0
+        if not self.winner.id == self.game.winner.id:
+            return 0
+
+        season_year = int(self.game.season) if self.game.season else 2025
+        if season_year < 2026:
+            return self._points_2025()
+        else:
+            return self._points_2026()
