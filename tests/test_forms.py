@@ -12,6 +12,8 @@ class TestRegisterForm:
         """Enter username that is already registered."""
         form = RegisterForm(
             username=user.username,
+            first_name="foo",
+            last_name="bar",
             email="foo@bar.com",
             password="example",
             confirm="example",
@@ -23,7 +25,7 @@ class TestRegisterForm:
     def test_validate_email_already_registered(self, user):
         """Enter email that is already registered."""
         form = RegisterForm(
-            username="unique", email=user.email, password="example", confirm="example"
+            username="unique", first_name="foo", last_name="bar", email=user.email, password="example", confirm="example"
         )
 
         assert form.validate() is False
@@ -33,6 +35,8 @@ class TestRegisterForm:
         """Register with success."""
         form = RegisterForm(
             username="newusername",
+            first_name="foo",
+            last_name="bar",
             email="new@test.com",
             password="example",
             confirm="example",
