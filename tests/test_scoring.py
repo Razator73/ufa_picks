@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import datetime as dt
+
 import pytest
 
-from ufa_picks.user.models import User, Pick
 from ufa_picks.game.models import Game, Team
+from ufa_picks.user.models import Pick, User
 
 from .factories import UserFactory
 
@@ -35,10 +36,10 @@ class TestScoring2026:
             week=1,
             streaming_url="",
             has_roster_report=False,
-            season="2026"
+            season="2026",
         )
         db.session.add(game)
-        
+
         pick = Pick(user_id=user.id, game_id=game.id)
         db.session.add(pick)
         db.session.commit()
@@ -53,31 +54,31 @@ class TestScoring2026:
         pick.home_team_score = 3
         pick.away_team_score = 0
         db.session.commit()
-        assert pick.points == 3 # base winner score for 2026
+        assert pick.points == 3  # base winner score for 2026
 
         # Correct winner, exact home score
         pick.home_team_score = 10
         pick.away_team_score = 2
         db.session.commit()
-        assert pick.points == 4 # 3 winner + 1 exact home
+        assert pick.points == 4  # 3 winner + 1 exact home
 
         # Correct winner, exact away score
         pick.home_team_score = 7
         pick.away_team_score = 6
         db.session.commit()
-        assert pick.points == 4 # 3 winner + 1 exact away
+        assert pick.points == 4  # 3 winner + 1 exact away
 
         # Correct winner, exact margin (margin is 4)
         pick.home_team_score = 14
         pick.away_team_score = 10
         db.session.commit()
-        assert pick.points == 4 # 3 winner + 1 exact margin
+        assert pick.points == 4  # 3 winner + 1 exact margin
 
         # Correct winner, exact scores (which inherently hits margin)
         pick.home_team_score = 10
         pick.away_team_score = 6
         db.session.commit()
-        assert pick.points == 6 # 3 win + 1 home + 1 away + 1 margin
+        assert pick.points == 6  # 3 win + 1 home + 1 away + 1 margin
 
     def test_2026_lowest_week_drop(self, db, setup_teams, user):
         team_a, team_b = setup_teams
@@ -94,7 +95,7 @@ class TestScoring2026:
                 week=w,
                 streaming_url="",
                 has_roster_report=False,
-                season="2026"
+                season="2026",
             )
             db.session.add(g)
             p = Pick(user_id=user.id, game_id=g.id)
@@ -125,7 +126,7 @@ class TestScoring2026:
         # Lowest reg season is Week 2 (3 pts)
         # Expected = 6 + 3 + 4 + 6 = 19
         # Dropped = 19 - 3 = 16
-        
+
         score = user.get_score(year=2026)
         assert score == 16
 
@@ -157,10 +158,10 @@ class TestScoring2025:
             week=1,
             streaming_url="",
             has_roster_report=False,
-            season="2025"
+            season="2025",
         )
         db.session.add(game)
-        
+
         pick = Pick(user_id=user.id, game_id=game.id)
         db.session.add(pick)
         db.session.commit()
@@ -176,24 +177,26 @@ class TestScoring2025:
         pick.home_team_score = 3
         pick.away_team_score = 0
         db.session.commit()
-        assert pick.points == 2 # 1 win + 1 closest margin (margin 3 vs actual 4)
+        assert pick.points == 2  # 1 win + 1 closest margin (margin 3 vs actual 4)
 
         # Better pick shows up
         user2 = UserFactory()
         db.session.add(user2)
-        pick2 = Pick(user_id=user2.id, game_id=game.id, home_team_score=9, away_team_score=5) # margin 4 (exact)
+        pick2 = Pick(
+            user_id=user2.id, game_id=game.id, home_team_score=9, away_team_score=5
+        )  # margin 4 (exact)
         db.session.add(pick2)
         db.session.commit()
 
         # Now pick1 is NOT the closest margin anymore
-        assert pick.points == 1 # 1 win, and it's no longer the closest.
-        assert pick2.points == 2 # 1 win + 1 closest margin (exact)
+        assert pick.points == 1  # 1 win, and it's no longer the closest.
+        assert pick2.points == 2  # 1 win + 1 closest margin (exact)
 
         # Correct winner, exact scores (including margin)
         pick.home_team_score = 10
         pick.away_team_score = 6
         db.session.commit()
-        assert pick.points == 4 # 1 win + 1 home + 1 away + 1 closest margin
+        assert pick.points == 4  # 1 win + 1 home + 1 away + 1 closest margin
 
     def test_2025_no_week_drop(self, db, setup_teams, user):
         team_a, team_b = setup_teams
@@ -211,7 +214,7 @@ class TestScoring2025:
                 week=w,
                 streaming_url="",
                 has_roster_report=False,
-                season="2025"
+                season="2025",
             )
             db.session.add(g)
             p = Pick(user_id=user.id, game_id=g.id)
@@ -225,7 +228,12 @@ class TestScoring2025:
                 p.away_team_score = 0
                 user3 = UserFactory()
                 db.session.add(user3)
-                p_competitor = Pick(user_id=user3.id, game_id=g.id, home_team_score=10, away_team_score=6)
+                p_competitor = Pick(
+                    user_id=user3.id,
+                    game_id=g.id,
+                    home_team_score=10,
+                    away_team_score=6,
+                )
                 db.session.add(p_competitor)
             db.session.add(p)
         db.session.commit()
@@ -233,6 +241,6 @@ class TestScoring2025:
         # Week 1: 4 points
         # Week 2: 1 point
         # Expected = 5 (No drop!)
-        
+
         score = user.get_score(year=2025)
         assert score == 5

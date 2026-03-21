@@ -78,6 +78,8 @@ class TestRegistering:
         # Fills out the form
         form = res.forms["registerForm"]
         form["username"] = "foobar"
+        form["first_name"] = "foo"
+        form["last_name"] = "bar"
         form["email"] = "foo@bar.com"
         form["password"] = "secret"
         form["confirm"] = "secret"
@@ -94,6 +96,8 @@ class TestRegistering:
         # Fills out form, but passwords don't match
         form = res.forms["registerForm"]
         form["username"] = "foobar"
+        form["first_name"] = "foo"
+        form["last_name"] = "bar"
         form["email"] = "foo@bar.com"
         form["password"] = "secret"
         form["confirm"] = "secrets"
@@ -111,6 +115,8 @@ class TestRegistering:
         # Fills out form, but username is already registered
         form = res.forms["registerForm"]
         form["username"] = user.username
+        form["first_name"] = "foo"
+        form["last_name"] = "bar"
         form["email"] = "foo@bar.com"
         form["password"] = "secret"
         form["confirm"] = "secret"
@@ -118,3 +124,12 @@ class TestRegistering:
         res = form.submit()
         # sees error
         assert "Username already registered" in res
+
+
+class TestPublicViews:
+    """Other public views."""
+
+    def test_about_page(self, testapp):
+        """View about page."""
+        res = testapp.get("/about/")
+        assert res.status_code == 200

@@ -6,7 +6,7 @@ import sys
 from flask import Flask, render_template
 from flask_moment import Moment
 
-from ufa_picks import commands, public, game, user
+from ufa_picks import commands, game, public, user
 from ufa_picks.extensions import (
     bcrypt,
     cache,
