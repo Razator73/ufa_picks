@@ -124,3 +124,12 @@ class TestRegistering:
         res = form.submit()
         # sees error
         assert "Username already registered" in res
+
+
+class TestPublicViews:
+    """Other public views."""
+
+    def test_about_page(self, testapp):
+        """View about page."""
+        res = testapp.get("/about/")
+        assert res.status_code == 200

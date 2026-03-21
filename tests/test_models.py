@@ -15,7 +15,9 @@ class TestUser:
 
     def test_get_by_id(self):
         """Get user by ID."""
-        user = User(username="foo", email="foo@bar.com", first_name="foo", last_name="bar")
+        user = User(
+            username="foo", email="foo@bar.com", first_name="foo", last_name="bar"
+        )
         user.save()
 
         retrieved = User.get_by_id(user.id)
@@ -23,14 +25,18 @@ class TestUser:
 
     def test_created_at_defaults_to_datetime(self):
         """Test creation date."""
-        user = User(username="foo", email="foo@bar.com", first_name="foo", last_name="bar")
+        user = User(
+            username="foo", email="foo@bar.com", first_name="foo", last_name="bar"
+        )
         user.save()
         assert bool(user.created_at)
         assert isinstance(user.created_at, dt.datetime)
 
     def test_password_is_nullable(self):
         """Test null password."""
-        user = User(username="foo", email="foo@bar.com", first_name="foo", last_name="bar")
+        user = User(
+            username="foo", email="foo@bar.com", first_name="foo", last_name="bar"
+        )
         user.save()
         assert user.password is None
 
@@ -47,7 +53,13 @@ class TestUser:
 
     def test_check_password(self):
         """Check password."""
-        user = User.create(username="foo", email="foo@bar.com", first_name="foo", last_name="bar", password="foobarbaz123")
+        user = User.create(
+            username="foo",
+            email="foo@bar.com",
+            first_name="foo",
+            last_name="bar",
+            password="foobarbaz123",
+        )
         assert user.check_password("foobarbaz123") is True
         assert user.check_password("barfoobaz") is False
 
@@ -72,5 +84,7 @@ class TestUser:
 
     def test_user_repr(self):
         """Check __repr__ output for User."""
-        user = User(username="foo", email="foo@bar.com", first_name="foo", last_name="bar")
+        user = User(
+            username="foo", email="foo@bar.com", first_name="foo", last_name="bar"
+        )
         assert user.__repr__() == "<User('foo')>"

@@ -42,7 +42,7 @@ class User(UserMixin, PkModel):
     active = Column(db.Boolean(), default=False)
     is_admin = Column(db.Boolean(), default=False)
 
-    picks = db.relationship('Pick', back_populates='user', lazy='dynamic')
+    picks = db.relationship("Pick", back_populates="user", lazy="dynamic")
 
     @hybrid_property
     def password(self):
@@ -79,7 +79,9 @@ class User(UserMixin, PkModel):
             if p.game.season == year:
                 # Determine if it's a regular season week (<= 13) or playoff (> 13)
                 if p.game.week <= 13:
-                    week_scores[p.game.week] = week_scores.get(p.game.week, 0) + p.points
+                    week_scores[p.game.week] = (
+                        week_scores.get(p.game.week, 0) + p.points
+                    )
                 else:
                     playoff_score += p.points
 
@@ -91,16 +93,16 @@ class User(UserMixin, PkModel):
             total_score -= lowest_week
 
         return total_score
-    
+
     def get_score(self, year=None):
         if year is None:
             year = str(dt.datetime.now().year)
         else:
             year = str(year)
 
-        if year == '2025':
+        if year == "2025":
             return self._get_score_2025(year)
-        elif year == '2026':
+        elif year == "2026":
             return self._get_score_2026(year)
         else:
             return 0
@@ -110,43 +112,59 @@ class User(UserMixin, PkModel):
         return f"<User({self.username!r})>"
 
 
-db.Index('ix_users_username', func.lower(User.username), unique=True)
-db.Index('ix_users_email', func.lower(User.email), unique=True)
+db.Index("ix_users_username", func.lower(User.username), unique=True)
+db.Index("ix_users_email", func.lower(User.email), unique=True)
 
 
 class Pick(PkModel):
     """A users picks."""
 
     __tablename__ = "picks"
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    game_id = db.Column(db.String(18), db.ForeignKey('games.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    game_id = db.Column(db.String(18), db.ForeignKey("games.id"))
     home_team_score = db.Column(db.Integer)
     away_team_score = db.Column(db.Integer)
 
-    game = relationship('Game', foreign_keys=[game_id], back_populates='picks')
-    user = relationship('User', foreign_keys=[user_id], back_populates='picks')
+    game = relationship("Game", foreign_keys=[game_id], back_populates="picks")
+    user = relationship("User", foreign_keys=[user_id], back_populates="picks")
 
-    __table_args__ = (db.UniqueConstraint('user_id', 'game_id', name='unique_user_game'),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "game_id", name="unique_user_game"),
+    )
 
     @property
     def winner(self):
         """The winner picked"""
-        return self.game.home_team if self.home_team_score > self.away_team_score \
+        return (
+            self.game.home_team
+            if self.home_team_score > self.away_team_score
             else self.game.away_team
+        )
 
     @property
     def loser(self):
         """The loser picked"""
-        return self.game.home_team if self.home_team_score < self.away_team_score \
+        return (
+            self.game.home_team
+            if self.home_team_score < self.away_team_score
             else self.game.away_team
+        )
 
     @property
     def higher_score(self):
-        return self.home_team_score if self.home_team_score > self.away_team_score else self.away_team_score
+        return (
+            self.home_team_score
+            if self.home_team_score > self.away_team_score
+            else self.away_team_score
+        )
 
     @property
     def lower_score(self):
-        return self.home_team_score if self.home_team_score < self.away_team_score else self.away_team_score
+        return (
+            self.home_team_score
+            if self.home_team_score < self.away_team_score
+            else self.away_team_score
+        )
 
     @property
     def pick_str(self):
@@ -159,7 +177,10 @@ class Pick(PkModel):
             score += 1
         if self.away_team_score == self.game.away_score:
             score += 1
-        if abs(self.game.margin - (self.higher_score - self.lower_score)) == self.game.closest_margin:
+        if (
+            abs(self.game.margin - (self.higher_score - self.lower_score))
+            == self.game.closest_margin
+        ):
             score += 1
         return score
 
@@ -175,7 +196,7 @@ class Pick(PkModel):
 
     @property
     def points(self):
-        if self.game.status != 'Final':
+        if self.game.status != "Final":
             return 0
         if not self.winner.id == self.game.winner.id:
             return 0

@@ -25,7 +25,12 @@ class TestRegisterForm:
     def test_validate_email_already_registered(self, user):
         """Enter email that is already registered."""
         form = RegisterForm(
-            username="unique", first_name="foo", last_name="bar", email=user.email, password="example", confirm="example"
+            username="unique",
+            first_name="foo",
+            last_name="bar",
+            email=user.email,
+            password="example",
+            confirm="example",
         )
 
         assert form.validate() is False
@@ -76,3 +81,8 @@ class TestLoginForm:
         form = LoginForm(username=user.username, password="myprecious")
         assert form.validate() is False
         assert "User not activated" in form.username.errors
+
+    def test_validate_empty_fields(self, db):
+        """Empty fields."""
+        form = LoginForm(username="", password="")
+        assert form.validate() is False
