@@ -133,3 +133,35 @@ class TestPublicViews:
         """View about page."""
         res = testapp.get("/about/")
         assert res.status_code == 200
+
+    def test_home_page_countdown(self, testapp, db):
+        """View home page with countdown."""
+        import datetime as dt
+
+        from ufa_picks.game.models import Game, Team
+
+        team1 = Team(id="T1", team_city="City1", team_name="Name1")
+        team2 = Team(id="T2", team_city="City2", team_name="Name2")
+        db.session.add_all([team1, team2])
+
+        future_time = dt.datetime.now(dt.timezone.utc).replace(
+            tzinfo=None
+        ) + dt.timedelta(days=5)
+        game = Game(
+            id="G1",
+            home_team_id="T1",
+            away_team_id="T2",
+            status="Scheduled",
+            week=1,
+            season=str(dt.datetime.now().year),
+            streaming_url="",
+            has_roster_report=False,
+            start_timestamp=future_time,
+        )
+        db.session.add(game)
+        db.session.commit()
+
+        res = testapp.get("/")
+        assert res.status_code == 200
+        assert "Season Starts In:" in res.text
+        assert "data-time=" in res.text

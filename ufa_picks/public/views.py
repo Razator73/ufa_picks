@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Public section, including homepage and signup."""
+import datetime as dt
+
 from flask import (
     Blueprint,
     current_app,
@@ -12,6 +14,7 @@ from flask import (
 from flask_login import login_required, login_user, logout_user
 
 from ufa_picks.extensions import login_manager
+from ufa_picks.game.models import Game
 from ufa_picks.public.forms import LoginForm
 from ufa_picks.user.forms import RegisterForm
 from ufa_picks.user.models import User
@@ -40,7 +43,20 @@ def home():
             return redirect(redirect_url)
         else:
             flash_errors(form)
-    return render_template("public/home.html", form=form)
+
+    year = str(dt.datetime.now().year)
+    first_game = (
+        Game.query.filter_by(season=year).order_by(Game.start_timestamp).first()
+    )
+    first_game_time = (
+        first_game.start_timestamp.isoformat() + "Z"
+        if first_game and first_game.start_timestamp
+        else None
+    )
+
+    return render_template(
+        "public/home.html", form=form, first_game_time=first_game_time
+    )
 
 
 @blueprint.route("/logout/")
