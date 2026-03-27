@@ -38,6 +38,9 @@
     </thead>
     <tbody>
       {% for entry in sorted_players %}
+      {% if tab == 'top' and loop.index == 8 %}
+      <tr class="table-light"><td colspan="3" class="text-center py-1" style="font-size: 0.8rem; letter-spacing: 5px; color: #6c757d;">•••</td></tr>
+      {% endif %}
       <tr {% if current_user.is_authenticated and entry.user.id == current_user.id %}class="table-primary fw-bold"{% endif %}>
         <td>#{{ entry.rank }}</td>
         <td><a href="{{ url_for('user.profile', user_id=entry.user.id) }}" class="text-decoration-none {% if current_user.is_authenticated and entry.user.id == current_user.id %}text-dark{% endif %}">{{ entry.user.full_name }}</a></td>
