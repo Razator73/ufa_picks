@@ -2,14 +2,41 @@
 """User views."""
 import datetime as dt
 
-from flask import Blueprint, render_template
-from flask_login import login_required
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from ufa_picks.extensions import db
+from ufa_picks.extensions import cache, db
 from ufa_picks.user.models import Pick, User
 
 blueprint = Blueprint("user", __name__, url_prefix="/users", static_folder="../static")
+
+
+@cache.memoize(timeout=60)
+def get_leaderboard_cache(year):
+    players = User.query.filter_by(active=True).all()
+    sort_dict = {p.id: {"user": p, "score": p.get_score(year)} for p in players}
+    sorted_items = sorted(
+        sort_dict.values(), key=lambda item: item["score"], reverse=True
+    )
+
+    ranked = []
+    rank = 1
+    for item in sorted_items:
+        ranked.append({"user": item["user"], "score": item["score"], "rank": rank})
+        rank += 1
+    return ranked
+
+
+@blueprint.app_context_processor
+def inject_user_stats():
+    if current_user.is_authenticated:
+        year = str(dt.datetime.now().year)
+        lb = get_leaderboard_cache(year)
+        for entry in lb:
+            if entry["user"].id == current_user.id:
+                return {"nav_score": entry["score"], "nav_rank": entry["rank"]}
+    return {}
 
 
 @blueprint.route("/", defaults={"year": None})
@@ -18,8 +45,109 @@ blueprint = Blueprint("user", __name__, url_prefix="/users", static_folder="../s
 def members(year):
     if year is None:
         year = str(dt.datetime.now().year)
-    """Leader board"""
-    players = User.query.all()
-    sort_dict = {p: p.get_score(year) for p in players}
-    sorted_dict = sorted(sort_dict.items(), key=lambda item: item[1], reverse=True)
-    return render_template("users/members.html", sorted_players=sorted_dict, year=year)
+
+    tab = request.args.get("tab", "top")
+    query = request.args.get("q", "").lower()
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
+    ranked_players = get_leaderboard_cache(year)
+    display_players = []
+
+    if tab == "friends":
+        friends_ids = [f.id for f in current_user.followed]
+        friends_ids.append(current_user.id)
+        display_players = [p for p in ranked_players if p["user"].id in friends_ids]
+    elif tab == "all":
+        if query:
+            display_players = [
+                p
+                for p in ranked_players
+                if query in p["user"].first_name.lower()
+                or query in p["user"].last_name.lower()
+            ]
+        else:
+            display_players = ranked_players
+    else:  # top
+        tab = "top"
+        display_players = ranked_players[:7]
+        # Append current user if they aren't in the top 7
+        if not any(p["user"].id == current_user.id for p in display_players):
+            for p in ranked_players:
+                if p["user"].id == current_user.id:
+                    display_players.append(p)
+                    break
+
+    total_pages = 1
+    if tab == "all":
+        total_pages = max(1, (len(display_players) + per_page - 1) // per_page)
+        start_idx = (page - 1) * per_page
+        display_players = display_players[start_idx : start_idx + per_page]
+
+    return render_template(
+        "users/members.html",
+        sorted_players=display_players,
+        year=year,
+        tab=tab,
+        query=query,
+        page=page,
+        total_pages=total_pages,
+    )
+
+
+@blueprint.route("/profile/<int:user_id>")
+@login_required
+def profile(user_id):
+    user = db.get_or_404(User, user_id)
+    year = str(dt.datetime.now().year)
+
+    ranked_players = get_leaderboard_cache(year)
+    user_rank = None
+    user_score = user.get_score(year)
+    for entry in ranked_players:
+        if entry["user"].id == user.id:
+            user_rank = entry["rank"]
+            user_score = entry["score"]
+            break
+
+    week_scores = {}
+    for p in user.picks:
+        if p.game.season == year and p.game.status == "Final":
+            week_scores[p.game.week] = week_scores.get(p.game.week, 0) + p.points
+
+    sorted_weeks = sorted(week_scores.items())
+
+    return render_template(
+        "users/profile.html",
+        profile_user=user,
+        user_rank=user_rank,
+        user_score=user_score,
+        week_scores=sorted_weeks,
+        year=year,
+    )
+
+
+@blueprint.route("/follow/<int:user_id>", methods=["POST"])
+@login_required
+def follow(user_id):
+    user = db.get_or_404(User, user_id)
+    if user == current_user:
+        flash("You cannot follow yourself!", "warning")
+        return redirect(url_for("user.profile", user_id=user_id))
+    current_user.follow(user)
+    db.session.commit()
+    flash(f"You are now following {user.username}!", "success")
+    return redirect(url_for("user.profile", user_id=user_id))
+
+
+@blueprint.route("/unfollow/<int:user_id>", methods=["POST"])
+@login_required
+def unfollow(user_id):
+    user = db.get_or_404(User, user_id)
+    if user == current_user:
+        flash("You cannot unfollow yourself!", "warning")
+        return redirect(url_for("user.profile", user_id=user_id))
+    current_user.unfollow(user)
+    db.session.commit()
+    flash(f"You are no longer following {user.username}.", "info")
+    return redirect(url_for("user.profile", user_id=user_id))

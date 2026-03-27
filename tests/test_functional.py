@@ -159,9 +159,35 @@ class TestPublicViews:
             start_timestamp=future_time,
         )
         db.session.add(game)
+        past_time = future_time - dt.timedelta(days=10)
+        game2 = Game(
+            id="G2",
+            home_team_id="T1",
+            away_team_id="T2",
+            status="Final",
+            week=2,
+            season=str(dt.datetime.now().year),
+            streaming_url="",
+            has_roster_report=False,
+            start_timestamp=past_time,
+            home_score=10,
+            away_score=5,
+        )
+        db.session.add(game2)
+
+        from tests.factories import UserFactory
+        from ufa_picks.user.models import Pick
+
+        u = UserFactory(username="winner", first_name="Winner", active=True)
+        db.session.add(u)
+
+        p = Pick(user=u, game=game2, home_team_score=10, away_team_score=5)
+        db.session.add(p)
         db.session.commit()
 
         res = testapp.get("/")
         assert res.status_code == 200
         assert "Season Starts In:" in res.text
         assert "data-time=" in res.text
+        assert "Top Scorers of Week" in res.text
+        assert "Winner" in res.text
