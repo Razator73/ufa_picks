@@ -164,6 +164,28 @@ git commit -m "Add migrations"
 
 Make sure folder `migrations/versions` is not empty.
 
+## Syncing Database from Production
+
+To assist with local testing and QA without impacting live environments, you can pull data from the production database directly into your local offline SQLite development database container.
+
+First, ensure you have a `prod.env` credentials file at the root directory of the application:
+```text
+DATABASE_URL=postgresql://user:pass@production-host:5432/ufa_picks
+```
+*(Note: `.gitignore` protects `prod.env` from being checked into version control.)*
+
+Then, execute the `sync-db` command safely. You can specify a blanket sweep across all tables using the `--all-tables` flag, or declare individual components via `-t`:
+
+```bash
+# Sync everything natively via Docker:
+docker compose run --rm manage sync-db --all-tables
+
+# Or, sync explicit target tables:
+docker compose run --rm manage sync-db -t users -t games
+```
+
+*Note: Whenever the `users` table is targeted via this script, their production passwords will automatically be rewritten in your local copy to the fallback string `swordf1sh!` to allow QA profile impersonation.*
+
 ## Asset Management
 
 Files placed inside the `assets` directory and its subdirectories
