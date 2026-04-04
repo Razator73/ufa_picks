@@ -2,26 +2,30 @@
 {% block content %}
 <div class="container">
   <h1>UFA Picks Leader board</h1>
-<div class="row mb-3">
+  <div class="row mb-3">
     <div class="col-md-6">
       <ul class="nav nav-tabs">
         <li class="nav-item">
-          <a class="nav-link {% if tab == 'top' %}active{% endif %}" href="{{ url_for('user.members', tab='top', year=year) }}">Top 7</a>
+          <a class="nav-link {% if tab == 'top' %}active{% endif %}"
+            href="{{ url_for('user.members', tab='top', year=year) }}">Top 7</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if tab == 'friends' %}active{% endif %}" href="{{ url_for('user.members', tab='friends', year=year) }}">Friends</a>
+          <a class="nav-link {% if tab == 'friends' %}active{% endif %}"
+            href="{{ url_for('user.members', tab='friends', year=year) }}">Friends</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if tab == 'all' %}active{% endif %}" href="{{ url_for('user.members', tab='all', year=year) }}">All Players</a>
+          <a class="nav-link {% if tab == 'all' %}active{% endif %}"
+            href="{{ url_for('user.members', tab='all', year=year) }}">All Players</a>
         </li>
       </ul>
     </div>
-    
+
     {% if tab == 'all' %}
     <div class="col-md-6 text-end">
       <form class="d-flex" action="{{ url_for('user.members', year=year) }}" method="GET">
         <input type="hidden" name="tab" value="all">
-        <input class="form-control me-2" type="search" placeholder="Search first or last name..." aria-label="Search" name="q" value="{{ query }}">
+        <input class="form-control me-2" type="search" placeholder="Search first or last name..." aria-label="Search"
+          name="q" value="{{ query }}">
         <button class="btn btn-outline-primary" type="submit">Search</button>
       </form>
     </div>
@@ -34,21 +38,43 @@
         <th style="width: 10%">Rank</th>
         <th>Player</th>
         <th style="text-align: right; width: 20%">Score</th>
+        {% if tab == 'friends' %}
+        <th style="text-align: right; width: 15%">Global Rank</th>
+        {% endif %}
       </tr>
     </thead>
     <tbody>
       {% for entry in sorted_players %}
       {% if tab == 'top' and loop.index == 8 %}
-      <tr class="table-light"><td colspan="3" class="text-center py-1" style="font-size: 0.8rem; letter-spacing: 5px; color: #6c757d;">•••</td></tr>
+      <tr class="table-light">
+        <td colspan="{% if tab == 'friends' %}4{% else %}3{% endif %}" class="text-center py-1"
+          style="font-size: 0.8rem; letter-spacing: 5px; color: #6c757d;">•••
+        </td>
+      </tr>
       {% endif %}
-      <tr {% if current_user.is_authenticated and entry.user.id == current_user.id %}class="table-primary fw-bold"{% endif %}>
-        <td>#{{ entry.rank }}</td>
-        <td><a href="{{ url_for('user.profile', user_id=entry.user.id) }}" class="text-decoration-none {% if current_user.is_authenticated and entry.user.id == current_user.id %}text-dark{% endif %}">{{ entry.user.full_name }}</a></td>
+      <tr {% if current_user.is_authenticated and entry.user.id==current_user.id %}class="table-primary fw-bold" {%
+        endif %}>
+        <td>
+          {% if tab == 'friends' %}
+          #{{ loop.index }}
+          {% else %}
+          #{{ entry.rank }}
+          {% endif %}
+        </td>
+        <td><a href="{{ url_for('user.profile', user_id=entry.user.id) }}"
+            class="text-decoration-none {% if current_user.is_authenticated and entry.user.id == current_user.id %}text-dark{% endif %}">{{
+            entry.user.full_name }}</a></td>
         <td style="text-align: right;">{{ entry.score }}</td>
+        {% if tab == 'friends' %}
+        <td style="text-align: right;">
+          #{{ entry.rank }}
+        </td>
+        {% endif %}
       </tr>
       {% else %}
       <tr>
-        <td colspan="3" class="text-center text-muted py-4">No players found matching your criteria.</td>
+        <td colspan="{% if tab == 'friends' %}4{% else %}3{% endif %}" class="text-center text-muted py-4">No players
+          found matching your criteria.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -58,15 +84,16 @@
   <nav aria-label="Leaderboard pagination" class="mt-4">
     <ul class="pagination justify-content-center">
       <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-        <a class="page-link" href="{{ url_for('user.members', tab='all', q=query, page=page-1, year=year) }}">Previous</a>
+        <a class="page-link"
+          href="{{ url_for('user.members', tab='all', q=query, page=page-1, year=year) }}">Previous</a>
       </li>
-      
+
       {% for p in range(1, total_pages + 1) %}
       <li class="page-item {% if p == page %}active{% endif %}">
         <a class="page-link" href="{{ url_for('user.members', tab='all', q=query, page=p, year=year) }}">{{ p }}</a>
       </li>
       {% endfor %}
-      
+
       <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
         <a class="page-link" href="{{ url_for('user.members', tab='all', q=query, page=page+1, year=year) }}">Next</a>
       </li>

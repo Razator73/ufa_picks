@@ -28,7 +28,8 @@
           {% endif %}
           {% if current_user.id == profile_user.id %}
           <div class="mt-3">
-            <a href="{{ url_for('user.members', tab='friends', year=year) }}" class="btn btn-info w-100 text-white">Friends Leaderboard</a>
+            <a href="{{ url_for('user.members', tab='friends', year=year) }}"
+              class="btn btn-info w-100 text-white">Friends Leaderboard</a>
           </div>
           {% endif %}
         </div>
@@ -46,17 +47,21 @@
               <tr>
                 <th>Week</th>
                 <th class="text-end">Points Earned</th>
+                <th class="text-end">Running Total</th>
               </tr>
             </thead>
             <tbody>
+              {% set ns = namespace(total=0) %}
               {% for week, pts in week_scores %}
+              {% set ns.total = ns.total + pts %}
               <tr>
-                <td>Week {{ week }}</td>
-                <td class="text-end fw-bold text-success">+{{ pts }}</td>
+                <td><a href="{{ url_for('game.week', week_num=week, year=year) }}" class="text-decoration-none">Week {{ week }}</a></td>
+                <td class="text-end fw-bold">+{{ pts }}</td>
+                <td class="text-end text-muted fw-bold">{{ ns.total }}</td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="2" class="text-center text-muted py-4">No finalized picks yet for this season.</td>
+                <td colspan="3" class="text-center text-muted py-4">No finalized picks yet for this season.</td>
               </tr>
               {% endfor %}
             </tbody>

@@ -95,11 +95,13 @@ def members(year):
     )
 
 
-@blueprint.route("/profile/<int:user_id>")
+@blueprint.route("/profile/<int:user_id>/", defaults={"year": None})
+@blueprint.route("/profile/<int:user_id>/<string:year>")
 @login_required
-def profile(user_id):
+def profile(user_id, year):
+    if year is None:
+        year = str(dt.datetime.now().year)
     user = db.get_or_404(User, user_id)
-    year = str(dt.datetime.now().year)
 
     ranked_players = get_leaderboard_cache(year)
     user_rank = None
