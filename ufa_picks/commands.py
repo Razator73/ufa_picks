@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
+import random
+import datetime as dt
 from glob import glob
 from subprocess import call
 
 import click
+from sqlalchemy.exc import IntegrityError
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.join(HERE, os.pardir)
@@ -232,3 +235,92 @@ def sync_db(table, all_tables):
     
     db.session.commit()
     click.echo("Database sync complete.")
+
+@click.command()
+def dummy_data():
+    """Push dummy data into the database for dev."""
+    from ufa_picks.extensions import db
+    from ufa_picks.game.models import Game
+    from ufa_picks.user.models import User, Pick
+
+    click.echo("Starting dummy data generation...")
+
+    # 1. Update Games (calculate shift based on first game)
+    games = Game.query.all()
+    now_utc = dt.datetime.now(dt.timezone.utc)
+    now_naive = now_utc.replace(tzinfo=None)
+    
+    time_shift = dt.timedelta(days=0)
+    current_year = now_utc.year
+    first_game = Game.query.filter(Game.season == str(current_year), Game.start_timestamp != None).order_by(Game.start_timestamp.asc()).first()
+    
+    if first_game and first_game.start_timestamp:
+        first_time = first_game.start_timestamp
+        if first_time.tzinfo:
+            first_time = first_time.replace(tzinfo=None)
+            
+        if first_time > now_naive:
+            time_shift = first_time - now_naive + dt.timedelta(days=21)
+            click.echo(f"First game is in the future. Taking {time_shift.days} days off game start times to simulate being 3 weeks into the season.")
+        else:
+            click.echo("Currently during a season, no time shift applied.")
+            
+    updated_games_count = 0
+
+    for game in games:
+        if game.start_timestamp:
+            new_start = game.start_timestamp - time_shift
+            game.update(commit=False, start_timestamp=new_start)
+
+            # Check if it's now in the past
+            check_now = now_utc if new_start.tzinfo else now_naive
+            if new_start < check_now and game.status != "Final":
+                home_score = random.randint(10, 30)
+                away_score = random.randint(10, 30)
+                if home_score == away_score:
+                    home_score += 1
+                game.update(
+                    commit=False,
+                    status="Final",
+                    home_score=home_score,
+                    away_score=away_score,
+                )
+                updated_games_count += 1
+    
+    # Commit game updates
+    db.session.commit()
+    click.echo(f"Updated {updated_games_count} games with final scores.")
+
+    # 2. Push some picks for users
+    users = User.query.all()
+    created_picks_count = 0
+
+    for game in games:
+        for user in users:
+            # Check if pick already exists
+            existing = Pick.query.filter_by(user_id=user.id, game_id=game.id).first()
+            if not existing:
+                home_score = random.randint(10, 30)
+                away_score = random.randint(10, 30)
+                # Prevent ties in picks
+                if home_score == away_score:
+                    home_score += 1
+
+                pick = Pick(
+                    user_id=user.id,
+                    game_id=game.id,
+                    home_team_score=home_score,
+                    away_team_score=away_score
+                )
+                db.session.add(pick)
+                created_picks_count += 1
+    
+    # Commit picks
+    try:
+        db.session.commit()
+        click.echo(f"Created {created_picks_count} dummy picks.")
+    except IntegrityError:
+        db.session.rollback()
+        click.echo("IntegrityError while pushing picks. Some picks might already exist.")
+        
+    click.echo("Done!")

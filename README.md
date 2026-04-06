@@ -51,6 +51,12 @@ docker compose run --rm manage db migrate
 docker compose run --rm manage db upgrade
 ```
 
+To generate dummy data (simulate games and user picks) for local testing, you can run:
+
+```bash
+docker compose run --rm manage dummy-data
+```
+
 A docker volume `node-modules` is created to store NPM packages and is reused across the dev and prod versions of the application. For the purposes of DB testing with `sqlite`, the file `dev.db` is mounted to all containers. This volume mount should be removed from `docker compose.yml` if a production DB server is used.
 
 Go to `http://localhost:8080`. You will see a pretty welcome screen.

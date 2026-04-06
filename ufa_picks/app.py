@@ -86,6 +86,7 @@ def register_commands(app):
     app.cli.add_command(commands.test)
     app.cli.add_command(commands.lint)
     app.cli.add_command(commands.sync_db)
+    app.cli.add_command(commands.dummy_data)
 
 
 def configure_logger(app):
