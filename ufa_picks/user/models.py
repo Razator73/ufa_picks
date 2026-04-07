@@ -9,6 +9,12 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ufa_picks.database import Column, PkModel, db, reference_col, relationship
 from ufa_picks.extensions import bcrypt
 
+followers = db.Table(
+    "followers",
+    db.Column("follower_id", db.Integer, db.ForeignKey("users.id")),
+    db.Column("followed_id", db.Integer, db.ForeignKey("users.id")),
+)
+
 
 class Role(PkModel):
     """A role for a user."""
@@ -43,6 +49,15 @@ class User(UserMixin, PkModel):
     is_admin = Column(db.Boolean(), default=False)
 
     picks = db.relationship("Pick", back_populates="user", lazy="dynamic")
+
+    followed = db.relationship(
+        "User",
+        secondary=followers,
+        primaryjoin="followers.c.follower_id == User.id",
+        secondaryjoin="followers.c.followed_id == User.id",
+        backref=db.backref("followers", lazy="dynamic"),
+        lazy="dynamic",
+    )
 
     @hybrid_property
     def password(self):
@@ -106,6 +121,23 @@ class User(UserMixin, PkModel):
             return self._get_score_2026(year)
         else:
             return 0
+
+    def follow(self, user):
+        if self.id == user.id:
+            return
+        if not self.is_following(user):
+            self.followed.append(user)
+
+    def unfollow(self, user):
+        if self.id == user.id:
+            return
+        if self.is_following(user):
+            self.followed.remove(user)
+
+    def is_following(self, user):
+        if self.id == user.id:
+            return True
+        return self.followed.filter(followers.c.followed_id == user.id).count() > 0
 
     def __repr__(self):
         """Represent instance as a unique string."""
