@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """Extra model coverage tests."""
-import datetime as dt
-
 import pytest
 
 from ufa_picks.game.models import Game, Team
-from ufa_picks.user.models import Pick, User
+from ufa_picks.user.models import Pick
 
 
 @pytest.mark.usefixtures("db")
 class TestGameCoverage:
+    """Test game coverage."""
+
     def test_team_methods(self, db):
+        """Test team methods."""
         team1 = Team(id="T1", team_city="City1", team_name="Name1")
         team2 = Team(id="T2", team_city="City2", team_name="Name2")
         db.session.add_all([team1, team2])
@@ -63,6 +64,7 @@ class TestGameCoverage:
         assert team2.losses(2025) == 2
 
     def test_game_methods(self):
+        """Test game methods."""
         game = Game(
             id="G4",
             status="Scheduled",
@@ -89,7 +91,10 @@ class TestGameCoverage:
 
 @pytest.mark.usefixtures("db")
 class TestUserCoverage:
+    """Test user coverage."""
+
     def test_user_get_score(self, db, user):
+        """Test user get score."""
         user.save()
         # year is None (uses current year)
         assert user.get_score() == 0
@@ -97,6 +102,7 @@ class TestUserCoverage:
         assert user.get_score(year=1999) == 0
 
     def test_pick_methods(self, db, user):
+        """Test pick methods."""
         team1 = Team(id="T3", team_city="City3", team_name="Name3")
         team2 = Team(id="T4", team_city="City4", team_name="Name4")
         db.session.add_all([team1, team2])

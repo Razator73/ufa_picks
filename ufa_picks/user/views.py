@@ -4,16 +4,16 @@ import datetime as dt
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import func
 
 from ufa_picks.extensions import cache, db
-from ufa_picks.user.models import Pick, User
+from ufa_picks.user.models import User
 
 blueprint = Blueprint("user", __name__, url_prefix="/users", static_folder="../static")
 
 
 @cache.memoize(timeout=60)
 def get_leaderboard_cache(year):
+    """Calculate and return the ranked leaderboard for a given year."""
     players = User.query.filter_by(active=True).all()
     sort_dict = {p.id: {"user": p, "score": p.get_score(year)} for p in players}
     sorted_items = sorted(
@@ -30,6 +30,7 @@ def get_leaderboard_cache(year):
 
 @blueprint.app_context_processor
 def inject_user_stats():
+    """Inject navigation bar stats for the current user into template context."""
     if current_user.is_authenticated:
         year = str(dt.datetime.now().year)
         lb = get_leaderboard_cache(year)
@@ -43,6 +44,7 @@ def inject_user_stats():
 @blueprint.route("/<string:year>/")
 @login_required
 def members(year):
+    """Display the leaderboard and members list."""
     if year is None:
         year = str(dt.datetime.now().year)
 
@@ -95,10 +97,11 @@ def members(year):
     )
 
 
-@blueprint.route("/profile/<int:user_id>/", defaults={"year": None})
+@blueprint.route("/profile/<int:user_id>", defaults={"year": None})
 @blueprint.route("/profile/<int:user_id>/<string:year>")
 @login_required
 def profile(user_id, year):
+    """Display a user's profile and performance history."""
     if year is None:
         year = str(dt.datetime.now().year)
     user = db.get_or_404(User, user_id)
@@ -132,6 +135,7 @@ def profile(user_id, year):
 @blueprint.route("/follow/<int:user_id>", methods=["POST"])
 @login_required
 def follow(user_id):
+    """Follow a user and redirect back to their profile."""
     user = db.get_or_404(User, user_id)
     if user == current_user:
         flash("You cannot follow yourself!", "warning")
@@ -145,6 +149,7 @@ def follow(user_id):
 @blueprint.route("/unfollow/<int:user_id>", methods=["POST"])
 @login_required
 def unfollow(user_id):
+    """Unfollow a user and redirect back to their profile."""
     user = db.get_or_404(User, user_id)
     if user == current_user:
         flash("You cannot unfollow yourself!", "warning")

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
+import datetime as dt
 import os
 import random
-import datetime as dt
 from glob import glob
 from subprocess import call
 
@@ -85,22 +85,23 @@ def lint(fix_imports, check):
     execute_tool("Formatting style", "black", *black_args)
     execute_tool("Checking code style", "flake8")
 
+
 @click.command()
 @click.option("--table", "-t", multiple=True, help="Specific table to sync")
 @click.option("--all-tables", "-a", is_flag=True, help="Sync all tables")
 def sync_db(table, all_tables):
     """Sync dev database from production database (read-only prod.env needed)."""
     import os
-    from environs import Env
-    from sqlalchemy import create_engine, MetaData, text
-    from ufa_picks.extensions import db, bcrypt
 
-    env = Env()
+    from sqlalchemy import MetaData, create_engine, text
+
+    from ufa_picks.extensions import bcrypt, db
+
     prod_env_path = os.path.join(PROJECT_ROOT, "prod.env")
     if not os.path.exists(prod_env_path):
         click.echo("Error: prod.env file not found at project root.")
         return
-    
+
     # Read prod.env manually to avoid environment variable shadowing from the container
     prod_db_url = None
     with open(prod_env_path, "r") as f:
@@ -122,7 +123,9 @@ def sync_db(table, all_tables):
         click.echo("Aborting to prevent self-syncing.")
         return
 
-    click.echo(f"Syncing from: {prod_db_url.split('@')[-1] if '@' in prod_db_url else 'specified prod source'}")
+    click.echo(
+        f"Syncing from: {prod_db_url.split('@')[-1] if '@' in prod_db_url else 'specified prod source'}"
+    )
     prod_engine = create_engine(prod_db_url)
     prod_metadata = MetaData()
     prod_metadata.reflect(bind=prod_engine)
@@ -141,7 +144,9 @@ def sync_db(table, all_tables):
                             sync_names.add(t.name)
                             added = True
 
-        tables_to_sync = [t for t in prod_metadata.sorted_tables if t.name in sync_names]
+        tables_to_sync = [
+            t for t in prod_metadata.sorted_tables if t.name in sync_names
+        ]
         if not tables_to_sync:
             click.echo("No valid tables specified.")
             return
@@ -153,12 +158,11 @@ def sync_db(table, all_tables):
 
     # 1. Determine all local tables that need to be cleared to avoid constraint violations
     local_metadata = db.metadata
-    local_tables_by_name = {t.name: t for t in local_metadata.sorted_tables}
-    
+
     # We want to clear any table that we are about to sync, plus its local dependents
     tables_to_clear = []
     sync_names_set = {t.name for t in tables_to_sync}
-    
+
     # Iterate through local tables in reverse topological order
     for t in reversed(local_metadata.sorted_tables):
         if t.name in sync_names_set:
@@ -180,6 +184,16 @@ def sync_db(table, all_tables):
             click.echo(f"  -> Warning: Could not clear table {t.name} locally: {e}")
 
     # 2. Pull and Insert in topological order
+    _perform_sync_insert(prod_engine, prod_metadata, tables_to_sync, qa_password_hash)
+
+    db.session.commit()
+    click.echo("Database sync complete.")
+
+
+def _perform_sync_insert(prod_engine, prod_metadata, tables_to_sync, qa_password_hash):
+    """Helper to pull and insert data from production to development."""
+    from ufa_picks.extensions import db
+
     with prod_engine.connect() as prod_conn:
         for t in tables_to_sync:
             # Ensure the table exists in dev before trying to insert into it
@@ -189,7 +203,7 @@ def sync_db(table, all_tables):
                 pass
 
             click.echo(f"Syncing table from prod: {t.name}...")
-            
+
             prod_table = prod_metadata.tables.get(t.name)
             if prod_table is None:
                 click.echo(f"  -> Table {t.name} not found in production DB.")
@@ -199,7 +213,9 @@ def sync_db(table, all_tables):
             try:
                 results = prod_conn.execute(prod_table.select()).fetchall()
             except Exception as e:
-                click.echo(f"  -> Warning: Could not pull table {t.name} from prod: {e}")
+                click.echo(
+                    f"  -> Warning: Could not pull table {t.name} from prod: {e}"
+                )
                 try:
                     prod_conn.rollback()
                 except Exception:
@@ -220,28 +236,33 @@ def sync_db(table, all_tables):
                         if t.name == "users" and "password" in row_dict:
                             row_dict["password"] = qa_password_hash
                         insert_data.append(row_dict)
-                    
+
                     chunk_size = 500
                     for i in range(0, len(insert_data), chunk_size):
-                        db.session.execute(local_table.insert(), insert_data[i:i+chunk_size])
-                    
+                        db.session.execute(
+                            local_table.insert(), insert_data[i : i + chunk_size]
+                        )
+
                     db.session.commit()
                     click.echo(f"  -> Loaded {len(results)} rows into {t.name}.")
                 except Exception as e:
                     db.session.rollback()
-                    click.echo(f"  -> Warning: Could not insert rows into {t.name} locally: {e}")
+                    click.echo(
+                        f"  -> Warning: Could not insert rows into {t.name} locally: {e}"
+                    )
             else:
                 click.echo(f"  -> No data found in prod for {t.name}.")
-    
+
     db.session.commit()
     click.echo("Database sync complete.")
+
 
 @click.command()
 def dummy_data():
     """Push dummy data into the database for dev."""
     from ufa_picks.extensions import db
     from ufa_picks.game.models import Game
-    from ufa_picks.user.models import User, Pick
+    from ufa_picks.user.models import Pick, User
 
     click.echo("Starting dummy data generation...")
 
@@ -249,22 +270,31 @@ def dummy_data():
     games = Game.query.all()
     now_utc = dt.datetime.now(dt.timezone.utc)
     now_naive = now_utc.replace(tzinfo=None)
-    
+
     time_shift = dt.timedelta(days=0)
     current_year = now_utc.year
-    first_game = Game.query.filter(Game.season == str(current_year), Game.start_timestamp != None).order_by(Game.start_timestamp.asc()).first()
-    
+    first_game = (
+        Game.query.filter(
+            Game.season == str(current_year), Game.start_timestamp.isnot(None)
+        )
+        .order_by(Game.start_timestamp.asc())
+        .first()
+    )
+
     if first_game and first_game.start_timestamp:
         first_time = first_game.start_timestamp
         if first_time.tzinfo:
             first_time = first_time.replace(tzinfo=None)
-            
+
         if first_time > now_naive:
             time_shift = first_time - now_naive + dt.timedelta(days=21)
-            click.echo(f"First game is in the future. Taking {time_shift.days} days off game start times to simulate being 3 weeks into the season.")
+            click.echo(
+                f"First game is in the future. Taking {time_shift.days} days off game start times "
+                "to simulate being 3 weeks into the season."
+            )
         else:
             click.echo("Currently during a season, no time shift applied.")
-            
+
     updated_games_count = 0
 
     for game in games:
@@ -286,7 +316,7 @@ def dummy_data():
                     away_score=away_score,
                 )
                 updated_games_count += 1
-    
+
     # Commit game updates
     db.session.commit()
     click.echo(f"Updated {updated_games_count} games with final scores.")
@@ -310,17 +340,19 @@ def dummy_data():
                     user_id=user.id,
                     game_id=game.id,
                     home_team_score=home_score,
-                    away_team_score=away_score
+                    away_team_score=away_score,
                 )
                 db.session.add(pick)
                 created_picks_count += 1
-    
+
     # Commit picks
     try:
         db.session.commit()
         click.echo(f"Created {created_picks_count} dummy picks.")
     except IntegrityError:
         db.session.rollback()
-        click.echo("IntegrityError while pushing picks. Some picks might already exist.")
-        
+        click.echo(
+            "IntegrityError while pushing picks. Some picks might already exist."
+        )
+
     click.echo("Done!")
