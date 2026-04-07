@@ -4,12 +4,14 @@ from ufa_picks.public.views import load_user
 
 
 def test_load_user(user, db):
+    """Test load user."""
     user.save()
     loaded = load_user(str(user.id))
     assert loaded == user
 
 
 def test_error_handlers(testapp):
+    """Test error handlers."""
     # 404
     res = testapp.get("/not-found-route", expect_errors=True)
     assert res.status_code == 404
@@ -20,6 +22,7 @@ def test_error_handlers(testapp):
 
 
 def test_shell_context(app):
+    """Test shell context."""
     ctx = app.make_shell_context()
     assert "db" in ctx
     assert "User" in ctx

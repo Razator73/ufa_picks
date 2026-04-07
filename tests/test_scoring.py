@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-import datetime as dt
-
+"""Test scoring logic."""
 import pytest
 
 from ufa_picks.game.models import Game, Team
-from ufa_picks.user.models import Pick, User
+from ufa_picks.user.models import Pick
 
 from .factories import UserFactory
 
@@ -15,6 +14,7 @@ class TestScoring2026:
 
     @pytest.fixture
     def setup_teams(self, db):
+        """Setup teams for testing."""
         team_a = Team(id="A", team_city="City A", team_name="Team A")
         team_b = Team(id="B", team_city="City B", team_name="Team B")
         db.session.add(team_a)
@@ -23,6 +23,7 @@ class TestScoring2026:
         return team_a, team_b
 
     def test_2026_pick_points(self, db, setup_teams, user):
+        """Test 2026 pick points calculation."""
         team_a, team_b = setup_teams
 
         # 2026 game, Team A beats Team B 10-6
@@ -81,6 +82,7 @@ class TestScoring2026:
         assert pick.points == 6  # 3 win + 1 home + 1 away + 1 margin
 
     def test_2026_lowest_week_drop(self, db, setup_teams, user):
+        """Test dropping the lowest week in 2026."""
         team_a, team_b = setup_teams
 
         # Create three regular season games and one playoff game in 2026
@@ -137,6 +139,7 @@ class TestScoring2025:
 
     @pytest.fixture
     def setup_teams(self, db):
+        """Setup teams for 2025 testing."""
         team_a = Team(id="A", team_city="City A", team_name="Team A")
         team_b = Team(id="B", team_city="City B", team_name="Team B")
         db.session.add(team_a)
@@ -145,6 +148,7 @@ class TestScoring2025:
         return team_a, team_b
 
     def test_2025_pick_points(self, db, setup_teams, user):
+        """Test 2025 pick points calculation."""
         team_a, team_b = setup_teams
 
         # 2025 game, Team A beats Team B 10-6 (margin 4)
@@ -199,6 +203,7 @@ class TestScoring2025:
         assert pick.points == 4  # 1 win + 1 home + 1 away + 1 closest margin
 
     def test_2025_no_week_drop(self, db, setup_teams, user):
+        """Test that 2025 does not drop the lowest week."""
         team_a, team_b = setup_teams
 
         # Create two regular season games in 2025

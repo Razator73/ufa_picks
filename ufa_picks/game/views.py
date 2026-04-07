@@ -7,7 +7,7 @@ from flask_login import current_user, login_required
 
 from ufa_picks.extensions import db
 from ufa_picks.game.forms import GamePick
-from ufa_picks.game.models import Game, Team
+from ufa_picks.game.models import Game
 from ufa_picks.user.models import Pick
 
 blueprint = Blueprint("game", __name__, url_prefix="/games", static_folder="../static")
@@ -30,6 +30,7 @@ def main(year):
 
 
 def pre_lock(year, week_num):
+    """Handle games and picks before the week's first game starts."""
     token_form = GamePick(prefix="token")
     week_games = (
         Game.query.filter_by(season=year, week=week_num)
@@ -87,6 +88,7 @@ def pre_lock(year, week_num):
 @blueprint.route("/update_pick/<string:game_id>", methods=["POST"])
 @login_required
 def update_pick(game_id):
+    """Update a user's pick for a specific game via JSON API."""
     game = db.get_or_404(Game, game_id)
 
     if dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) > game.start_timestamp:
@@ -131,6 +133,7 @@ def update_pick(game_id):
 
 
 def post_lock(year, week_num):
+    """Display games and picks after the week's first game has started (read-only)."""
     week_games = (
         Game.query.filter_by(season=year, week=week_num)
         .order_by(Game.start_timestamp)
@@ -147,6 +150,7 @@ def post_lock(year, week_num):
 @blueprint.route("/<string:year>/week-<int:week_num>", methods=["GET", "POST"])
 @login_required
 def week(week_num, year):
+    """View and submit picks for a specific week."""
     if year is None:
         year = str(dt.datetime.now().year)
 

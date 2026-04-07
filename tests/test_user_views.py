@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """User view tests."""
-import pytest
-from flask import url_for
 
 
 class TestUserViews:
+    """Test user views."""
+
     def login(self, user, testapp):
+        """Login user."""
         res = testapp.get("/")
         form = res.forms["loginForm"]
         form["username"] = user.username
@@ -14,6 +15,7 @@ class TestUserViews:
         return res
 
     def test_members(self, user, testapp, db):
+        """Test members page."""
         self.login(user, testapp)
         res = testapp.get("/users/")
         assert res.status_code == 200
@@ -22,11 +24,13 @@ class TestUserViews:
         assert res.status_code == 200
 
     def test_members_friends_tab(self, user, testapp, db):
+        """Test members friends tab."""
         self.login(user, testapp)
         res = testapp.get("/users/?tab=friends")
         assert res.status_code == 200
 
     def test_members_all_tab(self, user, testapp, db):
+        """Test members all tab."""
         from tests.factories import UserFactory
 
         other = UserFactory(
@@ -45,12 +49,14 @@ class TestUserViews:
         assert "Other" in res.text
 
     def test_profile_page(self, user, testapp, db):
+        """Test profile page."""
         self.login(user, testapp)
         res = testapp.get(f"/users/profile/{user.id}")
         assert res.status_code == 200
         assert user.full_name in res.text
 
     def test_follow_unfollow(self, user, testapp, db):
+        """Test follow/unfollow logic."""
         from tests.factories import UserFactory
 
         other = UserFactory(username="target", active=True)
@@ -61,12 +67,12 @@ class TestUserViews:
 
         res = testapp.post(f"/users/follow/{other.id}").follow()
         assert res.status_code == 200
-        assert f"You are now following target" in res.text
+        assert "You are now following target" in res.text
         assert user.is_following(other)
 
         res = testapp.post(f"/users/unfollow/{other.id}").follow()
         assert res.status_code == 200
-        assert f"You are no longer following target" in res.text
+        assert "You are no longer following target" in res.text
         assert not user.is_following(other)
 
         res = testapp.post(f"/users/follow/{user.id}").follow()

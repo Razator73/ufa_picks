@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
 """Game models."""
-import datetime as dt
-
-from flask_login import UserMixin
-from sqlalchemy.ext.hybrid import hybrid_property
-
-from ufa_picks.database import Column, Model, PkModel, db, reference_col, relationship
-from ufa_picks.extensions import bcrypt
+from ufa_picks.database import Column, Model, db, relationship
 
 
 class Team(Model):
-    """A store team info"""
+    """A store team info."""
 
     __tablename__ = "teams"
     id = Column(db.String(30), primary_key=True)
@@ -26,9 +20,11 @@ class Team(Model):
 
     @property
     def full_name(self):
+        """Team full name."""
         return f"{self.team_city} {self.team_name}"
 
     def wins(self, season):
+        """Calculate wins for a season."""
         wins = 0
         season_str = str(season)
         for game in self.home_games:
@@ -48,6 +44,7 @@ class Team(Model):
         return wins
 
     def losses(self, season):
+        """Calculate losses for a season."""
         losses = 0
         season_str = str(season)
         for game in self.home_games:
@@ -67,11 +64,12 @@ class Team(Model):
         return losses
 
     def record(self, season):
+        """Get team record string."""
         return f"{self.wins(season)} - {self.losses(season)}"
 
 
 class Game(Model):
-    """Store game info"""
+    """Store game info."""
 
     __tablename__ = "games"
     id = Column(db.String(18), primary_key=True)
@@ -98,7 +96,7 @@ class Game(Model):
 
     @property
     def winner(self):
-        """The game winner"""
+        """The game winner."""
         if self.status == "Final":
             return (
                 self.home_team if self.home_score > self.away_score else self.away_team
@@ -107,6 +105,7 @@ class Game(Model):
 
     @property
     def higher_score(self):
+        """Get the higher score."""
         if self.home_score and self.away_score:
             return (
                 self.home_score
@@ -117,6 +116,7 @@ class Game(Model):
 
     @property
     def lower_score(self):
+        """Get the lower score."""
         if self.home_score and self.away_score:
             return (
                 self.home_score
@@ -127,10 +127,12 @@ class Game(Model):
 
     @property
     def margin(self):
+        """Calculate score margin."""
         return self.higher_score - self.lower_score
 
     @property
     def closest_margin(self):
+        """Find the closest margin from user picks."""
         closest = 1000
         for p in self.picks:
             if p.winner.id == self.winner.id:

@@ -2,14 +2,14 @@
 """Game view tests."""
 import datetime as dt
 
-import pytest
-from flask import url_for
-
 from ufa_picks.game.models import Game, Team
 
 
 class TestGameViews:
+    """Test game views."""
+
     def login(self, user, testapp):
+        """Login user."""
         res = testapp.get("/")
         form = res.forms["loginForm"]
         form["username"] = user.username
@@ -18,6 +18,7 @@ class TestGameViews:
         return res
 
     def test_games_main(self, user, testapp, db):
+        """Test games main page."""
         self.login(user, testapp)
         res = testapp.get("/games/")
         assert res.status_code == 200
@@ -26,6 +27,7 @@ class TestGameViews:
         assert res.status_code == 200
 
     def test_games_week_pre_lock(self, user, testapp, db):
+        """Test games week pre-lock."""
         self.login(user, testapp)
 
         team1 = Team(id="T1", team_city="C1", team_name="N1")
@@ -65,6 +67,7 @@ class TestGameViews:
         assert "Your picks have been saved!" in res.text
 
     def test_games_week_post_lock(self, user, testapp, db):
+        """Test games week post-lock."""
         self.login(user, testapp)
         team1 = Team(id="T3", team_city="C3", team_name="N3")
         team2 = Team(id="T4", team_city="C4", team_name="N4")
@@ -92,11 +95,13 @@ class TestGameViews:
         assert res.status_code == 200
 
     def test_games_post_season(self, user, testapp, db):
+        """Test games post season."""
         self.login(user, testapp)
         res = testapp.get("/games/2026/week-14")
         assert res.status_code == 200
 
     def test_games_no_games(self, user, testapp, db):
+        """Test games no games."""
         self.login(user, testapp)
         res = testapp.get("/games/2026/week-3").follow()
         assert "No games found for this week." in res.text
@@ -106,6 +111,7 @@ class TestGameViews:
         assert "No games found for this week." in res.text
 
     def test_update_pick_api(self, user, testapp, db):
+        """Test update pick API."""
         self.login(user, testapp)
         team1 = Team(id="T5", team_city="C5", team_name="N5")
         team2 = Team(id="T6", team_city="C6", team_name="N6")

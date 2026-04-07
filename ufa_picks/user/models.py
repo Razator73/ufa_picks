@@ -110,6 +110,7 @@ class User(UserMixin, PkModel):
         return total_score
 
     def get_score(self, year=None):
+        """Get the user's total score for a specific year."""
         if year is None:
             year = str(dt.datetime.now().year)
         else:
@@ -123,18 +124,21 @@ class User(UserMixin, PkModel):
             return 0
 
     def follow(self, user):
+        """Follow another user."""
         if self.id == user.id:
             return
         if not self.is_following(user):
             self.followed.append(user)
 
     def unfollow(self, user):
+        """Unfollow another user."""
         if self.id == user.id:
             return
         if self.is_following(user):
             self.followed.remove(user)
 
     def is_following(self, user):
+        """Check if the user is following another user."""
         if self.id == user.id:
             return True
         return self.followed.filter(followers.c.followed_id == user.id).count() > 0
@@ -166,7 +170,7 @@ class Pick(PkModel):
 
     @property
     def winner(self):
-        """The winner picked"""
+        """The winner picked."""
         return (
             self.game.home_team
             if self.home_team_score > self.away_team_score
@@ -175,7 +179,7 @@ class Pick(PkModel):
 
     @property
     def loser(self):
-        """The loser picked"""
+        """The loser picked."""
         return (
             self.game.home_team
             if self.home_team_score < self.away_team_score
@@ -184,6 +188,7 @@ class Pick(PkModel):
 
     @property
     def higher_score(self):
+        """The higher score of the pick."""
         return (
             self.home_team_score
             if self.home_team_score > self.away_team_score
@@ -192,6 +197,7 @@ class Pick(PkModel):
 
     @property
     def lower_score(self):
+        """The lower score of the pick."""
         return (
             self.home_team_score
             if self.home_team_score < self.away_team_score
@@ -200,7 +206,7 @@ class Pick(PkModel):
 
     @property
     def pick_str(self):
-        """Return the winner and score"""
+        """Return the winner and score."""
         return f"{self.winner.team_name} {self.higher_score} - {self.lower_score}"
 
     def _points_2025(self):
@@ -228,6 +234,7 @@ class Pick(PkModel):
 
     @property
     def points(self):
+        """Calculate points for the pick based on the game's actual results."""
         if self.game.status != "Final":
             return 0
         if not self.winner.id == self.game.winner.id:
