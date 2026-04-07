@@ -189,5 +189,3 @@ class TestPublicViews:
         assert res.status_code == 200
         assert "Season Starts In:" in res.text
         assert "data-time=" in res.text
-        assert "Top Scorers of Week" in res.text
-        assert "Winner" in res.text

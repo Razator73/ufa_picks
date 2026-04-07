@@ -109,6 +109,23 @@ class User(UserMixin, PkModel):
 
         return total_score
 
+    def get_weekly_score(self, year, week):
+        """Get the user's score for a specific week."""
+        year = str(year)
+        week = int(week)
+        score = 0
+        for p in self.picks:
+            if p.game.season == year and p.game.week == week:
+                score += p.points
+        return score
+
+    def get_game_score(self, game_id):
+        """Get the points earned for a specific game."""
+        for p in self.picks:
+            if p.game_id == str(game_id):
+                return p.points
+        return 0
+
     def get_score(self, year=None):
         """Get the user's total score for a specific year."""
         if year is None:

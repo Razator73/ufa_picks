@@ -1,63 +1,107 @@
-<style>
-  table {
-    border: 1px solid black;
-    border-collapse: collapse;
-    width: 500px;
-  }
-
-  table td {
-    padding: 5px;
-  }
-
-  input {
-    width: 50px;
-    height: 30px;
-    font-size: 14px;
-  }
-
-  .right-align {
-    text-align: right;
-  }
-</style>
-
 {% extends "layout.html" %}
 {% block content %}
 <div class="container">
-  <h1>UFA Games Week {{ week_num }}</h1>
-  <form method="POST">
-    {{ form.hidden_tag() }}
-    {% for game in games %}
-    <div class="game-container" data-game-id="{{ game['game'].id }}">
-      <table>
-        <tr>
-          <td>{{ game['game'].away_team.full_name }} ({{ game['game'].away_team.record(year) }})</td>
-          <td>@</td>
-          <td class="right-align">{{ game['game'].home_team.full_name }} ({{ game['game'].home_team.record(year) }})
-          </td>
-        </tr>
-        <tr>
-          <td>{{ game['form'].away_team_score() }}</td>
-          <td></td>
-          <td class="right-align">{{ game['form'].home_team_score() }}</td>
-        </tr>
-        <tr>
-          <td colspan="3" class="right-align">
-            Game start: {{ moment(game['game'].start_timestamp).format('LLL') }} ({{
-            moment(game['game'].start_timestamp).fromNow() }})
-          </td>
-        </tr>
-      </table>
-      {{ game['form'].game_id(value=game['game'].id, type="hidden") }}
-      <span class="save-status"
-        style="color: green; font-weight: bold; margin-left: 10px; opacity: 0; transition: opacity 0.5s;">Saved!</span>
+    <div class="row">
+        <!-- Main Game List -->
+        <div class="col-lg-8">
+            <h1 class="mb-4">UFA Games Week {{ week_num }}</h1>
+            
+            <form method="POST" id="picksForm">
+                {{ form.hidden_tag() }}
+                {% for g_data in games %}
+                {% set game = g_data['game'] %}
+                {% set g_form = g_data['form'] %}
+                
+                <div class="card mb-4 shadow-sm game-card" data-game-id="{{ game.id }}">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Week {{ game.week }} Matchup</span>
+                        <small>Starts {{ moment(game.start_timestamp).fromNow() }}</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center text-center">
+                            <!-- Away Team -->
+                            <div class="col-md-4">
+                                <h5 class="mb-1">{{ game.away_team.full_name }}</h5>
+                                <div class="text-muted small mb-2">{{ game.away_team.record(year) }}</div>
+                                {{ g_form.away_team_score(class="form-control form-control-lg text-center mx-auto", style="max-width: 100px;", placeholder="Score") }}
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <span class="fs-4 text-muted">@</span>
+                            </div>
+                            
+                            <!-- Home Team -->
+                            <div class="col-md-4">
+                                <h5 class="mb-1">{{ game.home_team.full_name }}</h5>
+                                <div class="text-muted small mb-2">{{ game.home_team.record(year) }}</div>
+                                {{ g_form.home_team_score(class="form-control form-control-lg text-center mx-auto", style="max-width: 100px;", placeholder="Score") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            <i class="bi bi-clock"></i> {{ moment(game.start_timestamp).format('LLL') }}
+                        </div>
+                        <div class="save-status-container">
+                            <span class="save-status badge rounded-pill" style="opacity: 0; transition: opacity 0.3s;">
+                                Saved!
+                            </span>
+                        </div>
+                    </div>
+                    {{ g_form.game_id(value=game.id, type="hidden") }}
+                </div>
+                {% endfor %}
+                
+                <div class="alert alert-warning shadow-sm mt-4">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Picks can be edited until the first game of the week starts 
+                    <strong>({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }})</strong>.
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Save All Picks</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar: Season Leaderboard -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px; z-index: 100;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Season Standings (Top 7)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th class="text-end">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in season_ranked %}
+                            <tr {% if current_user.id == entry.user.id %}class="table-primary fw-bold"{% endif %}>
+                                <td>#{{ loop.index }}</td>
+                                <td>
+                                    <a href="{{ url_for('user.profile', user_id=entry.user.id) }}" class="text-decoration-none">
+                                        {{ entry.user.full_name }}
+                                    </a>
+                                </td>
+                                <td class="text-end">{{ entry.score }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('user.members', tab='all', year=year) }}" class="small text-decoration-none">
+                        View Full Leaderboard
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    <br>
-    {% endfor %}
-    <p>
-      Can be edited even after submitting up till the first game of the week starts
-      ({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }}).
-    </p>
-  </form>
 </div>
 {% endblock %}
 
@@ -68,14 +112,14 @@
     const csrfTokenInput = document.querySelector('input[name="token-csrf_token"]') || document.querySelector('input[name="csrf_token"]');
     const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
 
-    const gameContainers = document.querySelectorAll('.game-container');
-    const updateUrlBase = "{{ url_for('game.update_pick', game_id=0) }}";
+    const gameCards = document.querySelectorAll('.game-card');
+    const updateUrlBase = "{{ url_for('game.update_pick', game_id='PLACEHOLDER') }}";
 
-    gameContainers.forEach(container => {
-      const gameId = container.getAttribute('data-game-id');
-      const fetchUrl = updateUrlBase.replace('/0', '/' + gameId);
-      const inputs = container.querySelectorAll('input[type="number"], input[type="text"]');
-      const statusSpan = container.querySelector('.save-status');
+    gameCards.forEach(card => {
+      const gameId = card.getAttribute('data-game-id');
+      const fetchUrl = updateUrlBase.replace('PLACEHOLDER', gameId);
+      const inputs = card.querySelectorAll('input[type="number"], input[type="text"]');
+      const statusSpan = card.querySelector('.save-status');
 
       inputs.forEach(input => {
         input.addEventListener('change', () => {
@@ -87,14 +131,10 @@
             if (gi.name.includes('away_team_score')) awayScore = gi.value;
           });
 
-          const bothFilled = (homeScore !== '' && awayScore !== '');
-
-          if (bothFilled) {
-            // Show saving indicator
-            statusSpan.innerText = 'Saving...';
-            statusSpan.style.color = '#0d6efd'; // Bootstrap info blue
-            statusSpan.style.opacity = '1';
-          }
+          // Show saving indicator if both are filled (or if any change happens, optionally)
+          statusSpan.innerText = 'Saving...';
+          statusSpan.className = 'save-status badge bg-info text-dark';
+          statusSpan.style.opacity = '1';
 
           fetch(fetchUrl, {
             method: 'POST',
@@ -110,26 +150,20 @@
             .then(response => response.json())
             .then(data => {
               if (data.status === 'success') {
-                if (bothFilled) {
-                  statusSpan.innerText = 'Saved!';
-                  statusSpan.style.color = 'green';
-                  setTimeout(() => {
-                    statusSpan.style.opacity = '0';
-                  }, 2000);
-                }
+                statusSpan.innerText = 'Saved!';
+                statusSpan.className = 'save-status badge bg-success';
+                setTimeout(() => {
+                  statusSpan.style.opacity = '0';
+                }, 2000);
               } else {
-                if (bothFilled) {
-                  statusSpan.innerText = 'Error: ' + data.message;
-                  statusSpan.style.color = 'red';
-                }
+                statusSpan.innerText = 'Error: ' + data.message;
+                statusSpan.className = 'save-status badge bg-danger';
               }
             })
             .catch(error => {
               console.error('Error:', error);
-              if (bothFilled) {
-                statusSpan.innerText = 'Error saving';
-                statusSpan.style.color = 'red';
-              }
+              statusSpan.innerText = 'Error saving';
+              statusSpan.className = 'save-status badge bg-danger';
             });
         });
       });

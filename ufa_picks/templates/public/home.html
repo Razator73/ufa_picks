@@ -16,34 +16,16 @@
     <p>At the end of the regular season, your lowest scoring week is automatically dropped! The playoffs will follow
       through to crowning a champion.</p>
 
-    {% if top_scorers %}
-    <div class="card mb-4 border-success mt-4">
-      <div class="card-header bg-success text-white">
-        <h4 class="mb-0">Top Scorers of Week {{ top_week }}</h4>
-      </div>
-      <ul class="list-group list-group-flush">
-        {% for scorer in top_scorers %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href="{{ url_for('user.profile', user_id=scorer.user.id) }}" class="text-decoration-none text-dark fw-bold">
-            {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% else %}🥉{% endif %} {{ scorer.user.full_name }}
-          </a>
-          <span class="badge bg-primary rounded-pill fs-6">{{ scorer.score }} pts</span>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-
     {% if first_game_time %}
     <div id="countdown" class="alert alert-info text-center" data-time="{{ first_game_time }}">
       <h4>Season Starts In: <span id="timer"></span></h4>
     </div>
     <script>
-      (function() {
+      (function () {
         const timerElement = document.getElementById('timer');
         const countdownContainer = document.getElementById('countdown');
         const targetTime = new Date(countdownContainer.dataset.time).getTime();
-        
+
         function updateTimer() {
           const now = new Date().getTime();
           const distance = targetTime - now;
@@ -55,10 +37,10 @@
           const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-          
+
           timerElement.innerText = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
         }
-        
+
         updateTimer();
         setInterval(updateTimer, 1000);
       })();

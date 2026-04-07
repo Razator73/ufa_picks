@@ -17,7 +17,7 @@ from ufa_picks.extensions import login_manager
 from ufa_picks.game.models import Game
 from ufa_picks.public.forms import LoginForm
 from ufa_picks.user.forms import RegisterForm
-from ufa_picks.user.models import Pick, User
+from ufa_picks.user.models import User
 from ufa_picks.utils import flash_errors
 
 blueprint = Blueprint("public", __name__, static_folder="../static")
@@ -54,36 +54,15 @@ def home():
         else None
     )
 
-    last_game = (
-        Game.query.filter_by(season=year, status="Final")
-        .order_by(Game.start_timestamp.desc())
-        .first()
-    )
-    top_scorers = []
-    top_week = None
-    if last_game:
-        top_week = last_game.week
-        picks = (
-            Pick.query.join(Game)
-            .filter(Game.season == year, Game.week == top_week, Game.status == "Final")
-            .all()
-        )
-        scores = {}
-        for p in picks:
-            scores[p.user_id] = scores.get(p.user_id, 0) + p.points
-
-        sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]
-        for uid, sc in sorted_scores:
-            u_obj = User.get_by_id(uid)
-            if u_obj:
-                top_scorers.append({"user": u_obj, "score": sc})
-
     return render_template(
         "public/home.html",
         form=form,
         first_game_time=first_game_time,
-        top_scorers=top_scorers,
-        top_week=top_week,
+    )
+    return render_template(
+        "public/home.html",
+        form=form,
+        first_game_time=first_game_time,
     )
 
 
