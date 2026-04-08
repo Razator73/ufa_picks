@@ -5,13 +5,13 @@
         <!-- Main Game List -->
         <div class="col-lg-8">
             <h1 class="mb-4">UFA Games Week {{ week_num }}</h1>
-            
+
             <form method="POST" id="picksForm">
                 {{ form.hidden_tag() }}
                 {% for g_data in games %}
                 {% set game = g_data['game'] %}
                 {% set g_form = g_data['form'] %}
-                
+
                 <div class="card mb-4 shadow-sm game-card" data-game-id="{{ game.id }}">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <span class="fw-bold">Week {{ game.week }} Matchup</span>
@@ -23,18 +23,20 @@
                             <div class="col-md-4">
                                 <h5 class="mb-1">{{ game.away_team.full_name }}</h5>
                                 <div class="text-muted small mb-2">{{ game.away_team.record(year) }}</div>
-                                {{ g_form.away_team_score(class="form-control form-control-lg text-center mx-auto", style="max-width: 100px;", placeholder="Score") }}
+                                {{ g_form.away_team_score(class="form-control form-control-lg text-center mx-auto",
+                                style="max-width: 100px;") }}
                             </div>
-                            
+
                             <div class="col-md-2">
                                 <span class="fs-4 text-muted">@</span>
                             </div>
-                            
+
                             <!-- Home Team -->
                             <div class="col-md-4">
                                 <h5 class="mb-1">{{ game.home_team.full_name }}</h5>
                                 <div class="text-muted small mb-2">{{ game.home_team.record(year) }}</div>
-                                {{ g_form.home_team_score(class="form-control form-control-lg text-center mx-auto", style="max-width: 100px;", placeholder="Score") }}
+                                {{ g_form.home_team_score(class="form-control form-control-lg text-center mx-auto",
+                                style="max-width: 100px;") }}
                             </div>
                         </div>
                     </div>
@@ -51,16 +53,13 @@
                     {{ g_form.game_id(value=game.id, type="hidden") }}
                 </div>
                 {% endfor %}
-                
+
                 <div class="alert alert-warning shadow-sm mt-4">
                     <i class="bi bi-info-circle-fill me-2"></i>
-                    Picks can be edited until the first game of the week starts 
+                    Picks can be edited until the first game of the week starts
                     <strong>({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }})</strong>.
                 </div>
-                
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
-                    <button type="submit" class="btn btn-primary btn-lg px-5">Save All Picks</button>
-                </div>
+
             </form>
         </div>
 
@@ -81,10 +80,11 @@
                         </thead>
                         <tbody>
                             {% for entry in season_ranked %}
-                            <tr {% if current_user.id == entry.user.id %}class="table-primary fw-bold"{% endif %}>
+                            <tr {% if current_user.id==entry.user.id %}class="table-primary fw-bold" {% endif %}>
                                 <td>#{{ loop.index }}</td>
                                 <td>
-                                    <a href="{{ url_for('user.profile', user_id=entry.user.id) }}" class="text-decoration-none">
+                                    <a href="{{ url_for('user.profile', user_id=entry.user.id) }}"
+                                        class="text-decoration-none">
                                         {{ entry.user.full_name }}
                                     </a>
                                 </td>
@@ -107,67 +107,71 @@
 
 {% block js %}
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Get CSRF token
-    const csrfTokenInput = document.querySelector('input[name="token-csrf_token"]') || document.querySelector('input[name="csrf_token"]');
-    const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+    document.addEventListener('DOMContentLoaded', () => {
+        // Get CSRF token
+        const csrfTokenInput = document.querySelector('input[name="token-csrf_token"]') || document.querySelector('input[name="csrf_token"]');
+        const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
 
-    const gameCards = document.querySelectorAll('.game-card');
-    const updateUrlBase = "{{ url_for('game.update_pick', game_id='PLACEHOLDER') }}";
+        const gameCards = document.querySelectorAll('.game-card');
+        const updateUrlBase = "{{ url_for('game.update_pick', game_id='PLACEHOLDER') }}";
 
-    gameCards.forEach(card => {
-      const gameId = card.getAttribute('data-game-id');
-      const fetchUrl = updateUrlBase.replace('PLACEHOLDER', gameId);
-      const inputs = card.querySelectorAll('input[type="number"], input[type="text"]');
-      const statusSpan = card.querySelector('.save-status');
+        gameCards.forEach(card => {
+            const gameId = card.getAttribute('data-game-id');
+            const fetchUrl = updateUrlBase.replace('PLACEHOLDER', gameId);
+            const inputs = card.querySelectorAll('input[type="number"], input[type="text"]');
+            const statusSpan = card.querySelector('.save-status');
 
-      inputs.forEach(input => {
-        input.addEventListener('change', () => {
-          let homeScore = '';
-          let awayScore = '';
+            inputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    let homeScore = '';
+                    let awayScore = '';
 
-          inputs.forEach(gi => {
-            if (gi.name.includes('home_team_score')) homeScore = gi.value;
-            if (gi.name.includes('away_team_score')) awayScore = gi.value;
-          });
+                    inputs.forEach(gi => {
+                        if (gi.name.includes('home_team_score')) homeScore = gi.value;
+                        if (gi.name.includes('away_team_score')) awayScore = gi.value;
+                    });
 
-          // Show saving indicator if both are filled (or if any change happens, optionally)
-          statusSpan.innerText = 'Saving...';
-          statusSpan.className = 'save-status badge bg-info text-dark';
-          statusSpan.style.opacity = '1';
+                    const bothFilled = (homeScore !== '' && awayScore !== '');
 
-          fetch(fetchUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-              home_team_score: homeScore,
-              away_team_score: awayScore
-            })
-          })
-            .then(response => response.json())
-            .then(data => {
-              if (data.status === 'success') {
-                statusSpan.innerText = 'Saved!';
-                statusSpan.className = 'save-status badge bg-success';
-                setTimeout(() => {
-                  statusSpan.style.opacity = '0';
-                }, 2000);
-              } else {
-                statusSpan.innerText = 'Error: ' + data.message;
-                statusSpan.className = 'save-status badge bg-danger';
-              }
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              statusSpan.innerText = 'Error saving';
-              statusSpan.className = 'save-status badge bg-danger';
+                    if (bothFilled) {
+                        // Show saving indicator if both are filled
+                        statusSpan.innerText = 'Saving...';
+                        statusSpan.className = 'save-status badge bg-info text-dark';
+                        statusSpan.style.opacity = '1';
+
+                        fetch(fetchUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                home_team_score: homeScore,
+                                away_team_score: awayScore
+                            })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    statusSpan.innerText = 'Saved!';
+                                    statusSpan.className = 'save-status badge bg-success';
+                                    setTimeout(() => {
+                                        statusSpan.style.opacity = '0';
+                                    }, 2000);
+                                } else {
+                                    statusSpan.innerText = 'Error: ' + data.message;
+                                    statusSpan.className = 'save-status badge bg-danger';
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                statusSpan.innerText = 'Error saving';
+                                statusSpan.className = 'save-status badge bg-danger';
+                            });
+                    }
+                });
             });
         });
-      });
     });
-  });
 </script>
 {% endblock %}
