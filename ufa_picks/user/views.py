@@ -12,10 +12,15 @@ blueprint = Blueprint("user", __name__, url_prefix="/users", static_folder="../s
 
 
 @cache.memoize(timeout=60)
-def get_leaderboard_cache(year):
-    """Calculate and return the ranked leaderboard for a given year."""
+def get_leaderboard_cache(year, week=None):
+    """Calculate and return the ranked leaderboard for a given year and optional week."""
     players = User.query.filter_by(active=True).all()
-    sort_dict = {p.id: {"user": p, "score": p.get_score(year)} for p in players}
+    if week is not None:
+        sort_dict = {
+            p.id: {"user": p, "score": p.get_weekly_score(year, week)} for p in players
+        }
+    else:
+        sort_dict = {p.id: {"user": p, "score": p.get_score(year)} for p in players}
     sorted_items = sorted(
         sort_dict.values(), key=lambda item: item["score"], reverse=True
     )
@@ -51,9 +56,10 @@ def members(year):
     tab = request.args.get("tab", "top")
     query = request.args.get("q", "").lower()
     page = request.args.get("page", 1, type=int)
-    per_page = 20
+    week_filter = request.args.get("week", type=int)
+    per_page = 10
 
-    ranked_players = get_leaderboard_cache(year)
+    ranked_players = get_leaderboard_cache(year, week_filter)
     display_players = []
 
     if tab == "friends":
@@ -94,6 +100,7 @@ def members(year):
         query=query,
         page=page,
         total_pages=total_pages,
+        week=week_filter,
     )
 
 

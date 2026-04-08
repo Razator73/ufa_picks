@@ -1,10 +1,13 @@
-# -*- coding: utf-8 -*-
-"""Factories to help in tests."""
-from factory import Sequence
+"""Factories for creating test data."""
+
+import datetime as dt
+
+from factory import Sequence, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 
 from ufa_picks.database import db
-from ufa_picks.user.models import User
+from ufa_picks.game.models import Game, Team
+from ufa_picks.user.models import Pick, User
 
 
 class BaseFactory(SQLAlchemyModelFactory):
@@ -30,3 +33,49 @@ class UserFactory(BaseFactory):
         """Factory configuration."""
 
         model = User
+
+
+class TeamFactory(BaseFactory):
+    """Team factory."""
+
+    id = Sequence(lambda n: f"T{n}")
+    team_city = Sequence(lambda n: f"City {n}")
+    team_name = Sequence(lambda n: f"Team {n}")
+
+    class Meta:
+        """Factory configuration."""
+
+        model = Team
+
+
+class GameFactory(BaseFactory):
+    """Game factory."""
+
+    id = Sequence(lambda n: f"G{n}")
+    season = "2026"
+    week = 1
+    status = "Upcoming"
+    home_team = SubFactory(TeamFactory)
+    away_team = SubFactory(TeamFactory)
+    streaming_url = "http://example.com"
+    has_roster_report = False
+    start_timestamp = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+
+    class Meta:
+        """Factory configuration."""
+
+        model = Game
+
+
+class PickFactory(BaseFactory):
+    """Pick factory."""
+
+    user = SubFactory(UserFactory)
+    game = SubFactory(GameFactory)
+    home_team_score = 0
+    away_team_score = 0
+
+    class Meta:
+        """Factory configuration."""
+
+        model = Pick

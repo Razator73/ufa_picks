@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test scoring logic."""
 import datetime as dt
+
 import pytest
 
 from ufa_picks.game.models import Game, Team

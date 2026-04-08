@@ -1,21 +1,26 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="container">
-  <h1>UFA Picks Leader board</h1>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>UFA Picks Leaderboard{% if week %} (Week {{ week }}){% endif %}</h1>
+    {% if week %}
+      <a href="{{ url_for('user.members', year=year) }}" class="btn btn-outline-secondary btn-sm">Clear Week Filter</a>
+    {% endif %}
+  </div>
   <div class="row mb-3">
     <div class="col-md-6">
       <ul class="nav nav-tabs">
         <li class="nav-item">
           <a class="nav-link {% if tab == 'top' %}active{% endif %}"
-            href="{{ url_for('user.members', tab='top', year=year) }}">Top 7</a>
+            href="{{ url_for('user.members', tab='top', year=year, week=week) }}">Top 7</a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if tab == 'friends' %}active{% endif %}"
-            href="{{ url_for('user.members', tab='friends', year=year) }}">Friends</a>
+            href="{{ url_for('user.members', tab='friends', year=year, week=week) }}">Friends</a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if tab == 'all' %}active{% endif %}"
-            href="{{ url_for('user.members', tab='all', year=year) }}">All Players</a>
+            href="{{ url_for('user.members', tab='all', year=year, week=week) }}">All Players</a>
         </li>
       </ul>
     </div>
@@ -24,6 +29,7 @@
     <div class="col-md-6 text-end">
       <form class="d-flex" action="{{ url_for('user.members', year=year) }}" method="GET">
         <input type="hidden" name="tab" value="all">
+        {% if week %}<input type="hidden" name="week" value="{{ week }}">{% endif %}
         <input class="form-control me-2" type="search" placeholder="Search first or last name..." aria-label="Search"
           name="q" value="{{ query }}">
         <button class="btn btn-outline-primary" type="submit">Search</button>
@@ -85,17 +91,17 @@
     <ul class="pagination justify-content-center">
       <li class="page-item {% if page <= 1 %}disabled{% endif %}">
         <a class="page-link"
-          href="{{ url_for('user.members', tab='all', q=query, page=page-1, year=year) }}">Previous</a>
+          href="{{ url_for('user.members', tab='all', q=query, page=page-1, year=year, week=week) }}">Previous</a>
       </li>
 
       {% for p in range(1, total_pages + 1) %}
       <li class="page-item {% if p == page %}active{% endif %}">
-        <a class="page-link" href="{{ url_for('user.members', tab='all', q=query, page=p, year=year) }}">{{ p }}</a>
+        <a class="page-link" href="{{ url_for('user.members', tab='all', q=query, page=p, year=year, week=week) }}">{{ p }}</a>
       </li>
       {% endfor %}
 
       <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-        <a class="page-link" href="{{ url_for('user.members', tab='all', q=query, page=page+1, year=year) }}">Next</a>
+        <a class="page-link" href="{{ url_for('user.members', tab='all', q=query, page=page+1, year=year, week=week) }}">Next</a>
       </li>
     </ul>
   </nav>
