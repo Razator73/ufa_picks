@@ -57,7 +57,7 @@ def members(year):
     query = request.args.get("q", "").lower()
     page = request.args.get("page", 1, type=int)
     week_filter = request.args.get("week", type=int)
-    per_page = 20
+    per_page = 10
 
     ranked_players = get_leaderboard_cache(year, week_filter)
     display_players = []

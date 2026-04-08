@@ -183,3 +183,36 @@ class TestWeeklyViews:
         assert pos_top != -1
         assert pos_bottom != -1
         assert pos_top < pos_bottom
+
+    def test_sidebar_following_standings(self, user, testapp, db):
+        """Test friends standings in pre and post week views."""
+        # Create a game for week 6
+        game = GameFactory(season="2026", week=6)
+        db.session.add(game)
+
+        # Follow another user
+        followed = UserFactory(active=True)
+        db.session.add(followed)
+        user.follow(followed)
+
+        db.session.commit()
+
+        self.login(user, testapp)
+
+        # 1. Test Pre-Lock (Pick Entry)
+        res = testapp.get(url_for("game.week", year="2026", week_num=6))
+        assert "Friends Standings" in res.text
+        assert followed.full_name in res.text
+        assert user.full_name in res.text
+
+        # 2. Test Post-Lock (Results)
+        # Lock the week by making first game in past
+        game.start_timestamp = (
+            dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1)
+        ).replace(tzinfo=None)
+        db.session.commit()
+
+        res = testapp.get(url_for("game.week", year="2026", week_num=6))
+        assert "Friends Weekly Standings" in res.text
+        assert followed.full_name in res.text
+        assert user.full_name in res.text

@@ -98,8 +98,11 @@ def pre_lock(year, week_num):
         flash("Your picks have been saved!", "success")
         return redirect(url_for(".week", week_num=week_num, year=year))
 
-    # Get Top 7 for the season to match post-week sidebar layout
-    season_ranked = get_leaderboard_cache(year)[:7]
+    # Get Top 7 for the season and Friends standings
+    lb = get_leaderboard_cache(year)
+    season_ranked = lb[:7]
+    followed_ids = {f.id for f in current_user.followed} | {current_user.id}
+    followed_season_ranked = [entry for entry in lb if entry["user"].id in followed_ids]
 
     return render_template(
         "games/pre_week.html",
@@ -108,6 +111,7 @@ def pre_lock(year, week_num):
         year=year,
         form=token_form,
         season_ranked=season_ranked,
+        followed_season_ranked=followed_season_ranked,
     )
 
 
@@ -165,8 +169,11 @@ def post_lock(year, week_num):
         .order_by(Game.start_timestamp)
         .all()
     )
-    # Get Top 7 for the week
-    week_ranked = get_leaderboard_cache(year, week=week_num)[:7]
+    # Get Top 7 for the week and Friends standings
+    lb = get_leaderboard_cache(year, week=week_num)
+    week_ranked = lb[:7]
+    followed_ids = {f.id for f in current_user.followed} | {current_user.id}
+    followed_week_ranked = [entry for entry in lb if entry["user"].id in followed_ids]
 
     # Get current user's picks for this week
     user_picks = {
@@ -181,6 +188,7 @@ def post_lock(year, week_num):
         week_num=week_num,
         year=year,
         week_ranked=week_ranked,
+        followed_week_ranked=followed_week_ranked,
         user_picks=user_picks,
     )
 

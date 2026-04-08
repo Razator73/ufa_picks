@@ -63,8 +63,42 @@
             </form>
         </div>
 
-        <!-- Sidebar: Season Leaderboard -->
+        <!-- Sidebar -->
         <div class="col-lg-4">
+            <!-- Friends Standings -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Friends Standings</h5>
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th class="text-end">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in followed_season_ranked %}
+                            <tr {% if current_user.id==entry.user.id %}class="table-primary fw-bold" {% endif %}>
+                                <td>#{{ entry.rank }}</td>
+                                <td>
+                                    <a href="{{ url_for('user.profile', user_id=entry.user.id) }}"
+                                        class="text-decoration-none">
+                                        {{ entry.user.full_name }}
+                                    </a>
+                                </td>
+                                <td class="text-end">{{ entry.score }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Season Leaderboard -->
             <div class="card shadow-sm sticky-top" style="top: 20px; z-index: 100;">
                 <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">Season Standings (Top 7)</h5>
