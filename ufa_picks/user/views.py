@@ -6,6 +6,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from ufa_picks.extensions import cache, db
+from ufa_picks.user.forms import EditProfileForm
 from ufa_picks.user.models import User
 
 blueprint = Blueprint("user", __name__, url_prefix="/users", static_folder="../static")
@@ -146,6 +147,25 @@ def follow(user_id):
     db.session.commit()
     flash(f"You are now following {user.username}!", "success")
     return redirect(url_for("user.profile", user_id=user_id))
+
+
+@blueprint.route("/edit-profile", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    """Allow the current user to edit their email, password, and notification preferences."""
+    form = EditProfileForm(user=current_user)
+    if request.method == "GET":
+        form.email.data = current_user.email
+        form.get_email_reminder.data = current_user.get_email_reminder
+    if form.validate_on_submit():
+        current_user.email = form.email.data
+        current_user.get_email_reminder = form.get_email_reminder.data
+        if form.new_password.data:
+            current_user.password = form.new_password.data
+        current_user.save()
+        flash("Profile updated successfully.", "success")
+        return redirect(url_for("user.profile", user_id=current_user.id))
+    return render_template("users/edit_profile.html", form=form)
 
 
 @blueprint.route("/unfollow/<int:user_id>", methods=["POST"])

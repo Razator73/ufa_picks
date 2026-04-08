@@ -47,6 +47,8 @@ class User(UserMixin, PkModel):
     last_name = Column(db.String(30), nullable=False)
     active = Column(db.Boolean(), default=False)
     is_admin = Column(db.Boolean(), default=False)
+    get_email_reminder = Column(db.Boolean(), default=False, nullable=False)
+    force_password_change = Column(db.Boolean(), default=False, nullable=False)
 
     picks = db.relationship("Pick", back_populates="user", lazy="dynamic")
 

@@ -1,0 +1,25 @@
+Hi {{ user.first_name }},
+
+WEEK {{ upcoming_week_num }} PICKS ARE OPEN
+Don't forget to get your picks in before the week locks!
+Submit your picks: {{ picks_url }}
+
+{% if prev_week_num %}
+WEEK {{ prev_week_num }} RECAP
+You earned {{ user_prev_score }} point{{ 's' if user_prev_score != 1 else '' }}{% if user_prev_rank %} and finished #{{ user_prev_rank }} for the week{% endif %}.
+
+{% if top3_prev %}
+Top 3 Scorers — Week {{ prev_week_num }}:
+{% for entry in top3_prev %}
+  {{ loop.index }}. {{ entry.user.full_name }} — {{ entry.score }} pts
+{% endfor %}
+{% endif %}
+{% endif %}
+
+SEASON STANDINGS
+{% if season_rank %}Your current season rank: #{{ season_rank }}{% endif %}
+View the full leaderboard: {{ leaderboard_url }}
+
+---
+You're receiving this because you opted in to weekly reminders on UFA Picks.
+Update your preferences: {{ url_for('user.edit_profile', _external=True) }}
