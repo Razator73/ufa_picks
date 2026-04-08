@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__planka__planka_get_structure",
+      "mcp__planka__planka_get_board"
+    ]
+  }
+}
