@@ -77,7 +77,6 @@
             <table class="table table-striped table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 5%">#</th>
                         <th>Player</th>
                         <th>Pick</th>
                         <th class="text-end">Points</th>
@@ -86,12 +85,11 @@
                 <tbody>
                     {% for pick in followed_picks %}
                     <tr>
-                        <td>{{ loop.index }}</td>
                         <td>{{ pick.user.full_name }}</td>
                         <td>{{ pick.pick_str }}</td>
                         <td class="text-end">
                             {% if game.status == 'Final' %}
-                            <span class="badge bg-success">+{{ pick.points }}</span>
+                            <span class="badge {% if pick.points > 0 %}bg-success{% else %}bg-secondary{% endif %}">+{{ pick.points }}</span>
                             {% else %}
                             <span class="text-muted">--</span>
                             {% endif %}
@@ -112,7 +110,6 @@
             <table class="table table-striped table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 5%">#</th>
                         <th>Player</th>
                         <th>Pick</th>
                         <th class="text-end">Points</th>
@@ -121,12 +118,11 @@
                 <tbody>
                     {% for pick in picks_pagination.items %}
                     <tr {% if current_user.id==pick.user.id %}class="table-primary fw-bold text-dark" {% endif %}>
-                        <td>{{ (picks_pagination.page - 1) * picks_pagination.per_page + loop.index }}</td>
                         <td>{{ pick.user.full_name }}</td>
                         <td>{{ pick.pick_str }}</td>
                         <td class="text-end">
                             {% if game.status == 'Final' %}
-                            <span class="badge bg-success">+{{ pick.points }}</span>
+                            <span class="badge {% if pick.points > 0 %}bg-success{% else %}bg-secondary{% endif %}">+{{ pick.points }}</span>
                             {% else %}
                             <span class="text-muted">--</span>
                             {% endif %}

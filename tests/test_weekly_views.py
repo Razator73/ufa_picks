@@ -142,3 +142,44 @@ class TestWeeklyViews:
         assert "Friends' Picks" in res.text
         assert followed_user.full_name in res.text
         assert stranger.full_name in res.text  # present in the all players table
+
+    def test_game_details_sorting(self, user, testapp, db):
+        """Test that picks are sorted by points descending."""
+        past = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)
+        game = GameFactory(
+            season="2026",
+            week=5,
+            status="Final",
+            home_score=10,
+            away_score=0,
+            streaming_url="",
+            has_roster_report=False,
+            start_timestamp=past.replace(tzinfo=None),
+        )
+        db.session.add(game)
+
+        # High score player
+        top = UserFactory(active=True, last_name="Alpha")
+        db.session.add(top)
+        PickFactory(user=top, game=game, home_team_score=10, away_team_score=0)  # 6 pts
+
+        # Low score player
+        bottom = UserFactory(active=True, last_name="Omega")
+        db.session.add(bottom)
+        PickFactory(
+            user=bottom, game=game, home_team_score=3, away_team_score=0
+        )  # 4 pts
+
+        db.session.commit()
+
+        self.login(user, testapp)
+        res = testapp.get(url_for("game.game_details", year="2026", game_id=game.id))
+
+        assert res.status_code == 200
+        # Check order in HTML text
+        text = res.text
+        pos_top = text.find(top.full_name)
+        pos_bottom = text.find(bottom.full_name, pos_top)  # find bottom AFTER top
+        assert pos_top != -1
+        assert pos_bottom != -1
+        assert pos_top < pos_bottom

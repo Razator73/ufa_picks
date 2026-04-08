@@ -11,6 +11,26 @@ from ufa_picks.game.models import Game
 from ufa_picks.user.models import Pick, User
 from ufa_picks.user.views import get_leaderboard_cache
 
+
+class ManualPagination:
+    """A helper class that mimics Flask-SQLAlchemy's Pagination for a simple list."""
+
+    def __init__(self, items, page, per_page, total):
+        self.items = items
+        self.page = page
+        self.per_page = per_page
+        self.total = total
+        self.pages = (total + per_page - 1) // per_page
+        self.has_prev = page > 1
+        self.has_next = page < self.pages
+        self.prev_num = page - 1
+        self.next_num = page + 1
+
+    def iter_pages(self):
+        """Simple implementation of iter_pages."""
+        return range(1, self.pages + 1)
+
+
 blueprint = Blueprint("game", __name__, url_prefix="/games", static_folder="../static")
 
 
@@ -207,27 +227,23 @@ def game_details(year, game_id):
     if current_user.followed.count() > 0:
         followed_ids = [u.id for u in current_user.followed.all()]
         followed_ids.append(current_user.id)
-        followed_picks = Pick.query.filter(
-            Pick.game_id == game_id, Pick.user_id.in_(followed_ids)
-        ).all()
+        followed_picks = (
+            Pick.query.filter(Pick.game_id == game_id, Pick.user_id.in_(followed_ids))
+            .join(User)
+            .all()
+        )
+        followed_picks.sort(key=lambda p: (-p.points, p.user.last_name))
 
     page = request.args.get("page", 1, type=int)
-    per_page = 20
-    query = (
-        Pick.query.filter_by(game_id=game_id)
-        .join(User)
-        .order_by(Pick.home_team_score.desc(), User.last_name.asc())
-    )
-    # Note: In a real app we'd probably sort by points, but points are only calculated if game.status == 'Final'
-    # For now, let's just sort by the user's name or something consistent.
-    # If the game is Final, we can sort by points.
-    if game.status == "Final":
-        # Need to be careful with hybrid properties or complex sorting in SQL
-        # For simplicity in this dummy-data-rich app, we'll just fetch and sort if needed,
-        # but SQLAlchemy pagination works best on queries.
-        picks_pagination = query.paginate(page=page, per_page=per_page)
-    else:
-        picks_pagination = query.paginate(page=page, per_page=per_page)
+    per_page = 10
+
+    # Fetch all picks to sort by points (non-SQL property)
+    all_p = Pick.query.filter_by(game_id=game_id).join(User).all()
+    all_p.sort(key=lambda p: (-p.points, p.user.last_name))
+
+    total = len(all_p)
+    items = all_p[(page - 1) * per_page : page * per_page]
+    picks_pagination = ManualPagination(items, page, per_page, total)
 
     return render_template(
         "games/game_details.html",
