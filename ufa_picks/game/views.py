@@ -16,6 +16,7 @@ class ManualPagination:
     """A helper class that mimics Flask-SQLAlchemy's Pagination for a simple list."""
 
     def __init__(self, items, page, per_page, total):
+        """Create instance."""
         self.items = items
         self.page = page
         self.per_page = per_page
