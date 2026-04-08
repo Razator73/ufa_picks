@@ -109,3 +109,36 @@ class TestWeeklyViews:
         assert "All Player Picks" in res.text
         assert other.full_name in res.text
         assert "Edit Your Pick" not in res.text
+
+    def test_game_details_following_picks(self, user, testapp, db):
+        """Test that followed picks appear in a separate table."""
+        past = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)
+        game = GameFactory(
+            season="2026", week=4, start_timestamp=past.replace(tzinfo=None)
+        )
+        db.session.add(game)
+
+        # User we follow
+        followed_user = UserFactory(active=True)
+        db.session.add(followed_user)
+        user.follow(followed_user)
+
+        # Their pick
+        PickFactory(
+            user=followed_user, game=game, home_team_score=21, away_team_score=14
+        )
+
+        # User we DON'T follow
+        stranger = UserFactory(active=True)
+        db.session.add(stranger)
+        PickFactory(user=stranger, game=game, home_team_score=7, away_team_score=3)
+
+        db.session.commit()
+
+        self.login(user, testapp)
+        res = testapp.get(url_for("game.game_details", year="2026", game_id=game.id))
+
+        assert res.status_code == 200
+        assert "Friends' Picks" in res.text
+        assert followed_user.full_name in res.text
+        assert stranger.full_name in res.text  # present in the all players table

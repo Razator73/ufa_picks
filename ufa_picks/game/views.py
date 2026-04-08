@@ -203,6 +203,14 @@ def game_details(year, game_id):
         )
 
     # Post-lock: show all picks
+    followed_picks = []
+    if current_user.followed.count() > 0:
+        followed_ids = [u.id for u in current_user.followed.all()]
+        followed_ids.append(current_user.id)
+        followed_picks = Pick.query.filter(
+            Pick.game_id == game_id, Pick.user_id.in_(followed_ids)
+        ).all()
+
     page = request.args.get("page", 1, type=int)
     per_page = 20
     query = (
@@ -225,6 +233,7 @@ def game_details(year, game_id):
         "games/game_details.html",
         game=game,
         picks_pagination=picks_pagination,
+        followed_picks=followed_picks,
         user_pick=user_pick,
         lock=lock,
         year=year,
