@@ -86,28 +86,70 @@ class User(UserMixin, PkModel):
         return score
 
     def _get_score_2026(self, year):
-        # 2026 and later logic: drop lowest regular season week if > 1 played.
-        week_scores = {}
-        playoff_score = 0
+        """2026 and later logic: drop lowest regular season week if > 1 week played/passed."""
+        breakdown = self.get_weekly_breakdown(year)
+        return sum(item["score"] for item in breakdown if not item["is_dropped"])
+
+    def get_weekly_breakdown(self, year):
+        """Get a detailed breakdown of weekly scores, including the dropped week."""
+        from ufa_picks.game.models import Game
+
+        # Identify all regular season weeks (1-13) that have already started/passed.
+        now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+        active_weeks_query = (
+            db.session.query(Game.week)
+            .filter(Game.season == year, Game.week <= 13, Game.start_timestamp <= now)
+            .distinct()
+        )
+        active_weeks = [w[0] for w in active_weeks_query.all()]
+
+        # Initialize scores with 0 for all active weeks to account for missed weeks
+        reg_season_scores = {w: 0 for w in active_weeks}
+        playoff_scores = {}
 
         for p in self.picks:
             if p.game.season == year:
-                # Determine if it's a regular season week (<= 13) or playoff (> 13)
-                if p.game.week <= 13:
-                    week_scores[p.game.week] = (
-                        week_scores.get(p.game.week, 0) + p.points
-                    )
+                w = p.game.week
+                if w <= 13:
+                    if w in reg_season_scores:
+                        reg_season_scores[w] += p.points
                 else:
-                    playoff_score += p.points
+                    playoff_scores[w] = playoff_scores.get(w, 0) + p.points
 
-        total_score = sum(week_scores.values()) + playoff_score
+        dropped_week = None
+        # Drop lowest regular season week if at least 2 weeks have occurred
+        if len(reg_season_scores) > 1:
+            lowest_val = min(reg_season_scores.values())
+            # Find the earliest week with that lowest score to drop
+            for w in sorted(reg_season_scores.keys()):
+                if reg_season_scores[w] == lowest_val:
+                    dropped_week = w
+                    break
 
-        # Drop the lowest regular season week if they participated in at least 2 weeks
-        if len(week_scores) > 1:
-            lowest_week = min(week_scores.values())
-            total_score -= lowest_week
+        breakdown = []
+        # Add Regular Season
+        for w in sorted(reg_season_scores.keys()):
+            breakdown.append(
+                {
+                    "week": w,
+                    "score": reg_season_scores[w],
+                    "is_dropped": w == dropped_week,
+                    "is_playoff": False,
+                }
+            )
 
-        return total_score
+        # Add Playoffs
+        for w in sorted(playoff_scores.keys()):
+            breakdown.append(
+                {
+                    "week": w,
+                    "score": playoff_scores[w],
+                    "is_dropped": False,
+                    "is_playoff": True,
+                }
+            )
+
+        return breakdown
 
     def get_score(self, year=None):
         """Get the user's total score for a specific year."""

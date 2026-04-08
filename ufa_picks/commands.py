@@ -287,7 +287,8 @@ def dummy_data():
             first_time = first_time.replace(tzinfo=None)
 
         if first_time > now_naive:
-            time_shift = first_time - now_naive + dt.timedelta(days=21)
+            # Use 18 instead of 14 to account for a weekend of games
+            time_shift = first_time - now_naive + dt.timedelta(days=18)
             click.echo(
                 f"First game is in the future. Taking {time_shift.days} days off game start times "
                 "to simulate being 3 weeks into the season."
