@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Test scoring logic."""
+import datetime as dt
 import pytest
 
 from ufa_picks.game.models import Game, Team
@@ -98,6 +99,7 @@ class TestScoring2026:
                 streaming_url="",
                 has_roster_report=False,
                 season="2026",
+                start_timestamp=dt.datetime.now() - dt.timedelta(days=w),
             )
             db.session.add(g)
             p = Pick(user_id=user.id, game_id=g.id)
@@ -131,6 +133,82 @@ class TestScoring2026:
 
         score = user.get_score(year=2026)
         assert score == 16
+
+    def test_2026_missed_week_drop(self, db, setup_teams, user):
+        """Test that a missed week (0 pts) is dropped before a low-scoring played week."""
+        team_a, team_b = setup_teams
+
+        # Week 1: User plays and gets 10 points
+        g1 = Game(
+            id="GM_W1",
+            home_team_id=team_a.id,
+            away_team_id=team_b.id,
+            home_score=10,
+            away_score=0,
+            status="Final",
+            week=1,
+            season="2026",
+            streaming_url="",
+            has_roster_report=False,
+            start_timestamp=dt.datetime.now() - dt.timedelta(days=10),
+        )
+        # Week 2: User misses this week (0 points)
+        g2 = Game(
+            id="GM_W2",
+            home_team_id=team_a.id,
+            away_team_id=team_b.id,
+            home_score=10,
+            away_score=0,
+            status="Final",
+            week=2,
+            season="2026",
+            streaming_url="",
+            has_roster_report=False,
+            start_timestamp=dt.datetime.now() - dt.timedelta(days=5),
+        )
+        db.session.add_all([g1, g2])
+
+        # Only add pick for Week 1
+        p1 = Pick(
+            user_id=user.id, game_id=g1.id, home_team_score=10, away_team_score=0
+        )  # Correct winner (base 3) + exact scores (3) = 6 pts
+        db.session.add(p1)
+        db.session.commit()
+
+        # Score Breakdown:
+        # Week 1: 6 pts
+        # Week 2: 0 pts (Missed)
+        # Total = 6, Drop Lowest(0) = 6.
+        # If the bug remained, it would have seen only 1 week played and not dropped anything, or worse.
+        assert user.get_score(year="2026") == 6
+
+        # Now add a Week 3 with a higher score to ensure 0 is still the one dropped
+        g3 = Game(
+            id="GM_W3",
+            home_team_id=team_a.id,
+            away_team_id=team_b.id,
+            home_score=10,
+            away_score=0,
+            status="Final",
+            week=3,
+            season="2026",
+            streaming_url="",
+            has_roster_report=False,
+            start_timestamp=dt.datetime.now() - dt.timedelta(days=1),
+        )
+        db.session.add(g3)
+        p3 = Pick(
+            user_id=user.id, game_id=g3.id, home_team_score=10, away_team_score=0
+        )  # 6 pts
+        db.session.add(p3)
+        db.session.commit()
+
+        # Score Breakdown:
+        # Week 1: 6 pts
+        # Week 2: 0 pts (Missed)
+        # Week 3: 6 pts
+        # Total = 12, Drop Lowest(0) = 12.
+        assert user.get_score(year="2026") == 12
 
 
 @pytest.mark.usefixtures("db")

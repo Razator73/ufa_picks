@@ -52,16 +52,26 @@
             </thead>
             <tbody>
               {% set ns = namespace(total=0) %}
-              {% for week, pts in week_scores %}
-              {% set ns.total = ns.total + pts %}
+              {% for item in weekly_breakdown %}
+              {% if not item.is_dropped %}
+                {% set ns.total = ns.total + item.score %}
+              {% endif %}
               <tr>
-                <td><a href="{{ url_for('game.week', week_num=week, year=year) }}" class="text-decoration-none">Week {{ week }}</a></td>
-                <td class="text-end fw-bold">+{{ pts }}</td>
-                <td class="text-end text-muted fw-bold">{{ ns.total }}</td>
+                <td>
+                  <a href="{{ url_for('game.week', week_num=item.week, year=year) }}" class="text-decoration-none">
+                    {% if item.is_dropped %}<s>{% endif %}Week {{ item.week }}{% if item.is_dropped %}</s> <small class="text-danger">(Lowest Dropped)</small>{% endif %}
+                  </a>
+                </td>
+                <td class="text-end fw-bold">
+                  {% if item.is_dropped %}<s>{% endif %}+{{ item.score }}{% if item.is_dropped %}</s>{% endif %}
+                </td>
+                <td class="text-end text-muted fw-bold">
+                  {% if item.is_dropped %}<s>{% endif %}{{ ns.total }}{% if item.is_dropped %}</s>{% endif %}
+                </td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="3" class="text-center text-muted py-4">No finalized picks yet for this season.</td>
+                <td colspan="3" class="text-center text-muted py-4">No regular season games have started yet for this season.</td>
               </tr>
               {% endfor %}
             </tbody>

@@ -122,19 +122,14 @@ def profile(user_id, year):
             user_score = entry["score"]
             break
 
-    week_scores = {}
-    for p in user.picks:
-        if p.game.season == year and p.game.status == "Final":
-            week_scores[p.game.week] = week_scores.get(p.game.week, 0) + p.points
-
-    sorted_weeks = sorted(week_scores.items())
+    weekly_breakdown = user.get_weekly_breakdown(year)
 
     return render_template(
         "users/profile.html",
         profile_user=user,
         user_rank=user_rank,
         user_score=user_score,
-        week_scores=sorted_weeks,
+        weekly_breakdown=weekly_breakdown,
         year=year,
     )
 

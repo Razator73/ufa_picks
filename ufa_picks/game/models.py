@@ -106,7 +106,7 @@ class Game(Model):
     @property
     def higher_score(self):
         """Get the higher score."""
-        if self.home_score and self.away_score:
+        if self.home_score is not None and self.away_score is not None:
             return (
                 self.home_score
                 if self.home_score > self.away_score
@@ -117,7 +117,7 @@ class Game(Model):
     @property
     def lower_score(self):
         """Get the lower score."""
-        if self.home_score and self.away_score:
+        if self.home_score is not None and self.away_score is not None:
             return (
                 self.home_score
                 if self.home_score < self.away_score
