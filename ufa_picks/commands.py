@@ -366,8 +366,14 @@ def dummy_data():
 @click.command("send-reminders")
 @click.option("--year", default=None, help="Season year (defaults to current year)")
 @click.option("--dry-run", is_flag=True, help="Print emails without sending")
-def send_reminders(year, dry_run):
-    """Send weekly reminder emails to opted-in users."""
+@click.option("--force", is_flag=True, help="Send regardless of timing (bypass day-before check)")
+def send_reminders(year, dry_run, force):
+    """Send weekly reminder emails to opted-in users.
+
+    Designed to be run daily via cron. Emails are only sent when the first game
+    of the upcoming week is 20-28 hours away (i.e. the day before). Use --force
+    to bypass this check.
+    """
     import datetime as dt
 
     from flask import render_template, url_for
@@ -395,6 +401,24 @@ def send_reminders(year, dry_run):
         return
 
     upcoming_week_num = upcoming[0]
+
+    # Check timing: only send if the first game of the week is 20-28 hours away
+    if not force:
+        first_game = (
+            db.session.query(Game.start_timestamp)
+            .filter(Game.season == year, Game.week == upcoming_week_num)
+            .order_by(Game.start_timestamp)
+            .first()
+        )
+        if first_game:
+            hours_until = (first_game[0] - now).total_seconds() / 3600
+            if not (20 <= hours_until <= 36):
+                click.echo(
+                    f"First game of week {upcoming_week_num} is {hours_until:.1f}h away "
+                    f"(outside 20-36h window). Skipping. Use --force to override."
+                )
+                return
+
     prev_week_num = upcoming_week_num - 1 if upcoming_week_num > 1 else None
 
     click.echo(f"Upcoming week: {upcoming_week_num}, Previous week: {prev_week_num}")
@@ -405,8 +429,42 @@ def send_reminders(year, dry_run):
     top3_prev = prev_week_lb[:3]
     season_rank_map = {entry["user"].id: entry["rank"] for entry in season_lb}
 
+    # Compute prior rank (cumulative through week N-2) for rank-change calculation.
+    # Re-applies the dropped week logic as it would have stood at week N-2, not today.
+    prior_rank_map = {}
+    if prev_week_num and prev_week_num > 1:
+        two_weeks_ago = prev_week_num - 1
+        all_players = User.query.filter_by(active=True).all()
+        prior_scores = {}
+        for p in all_players:
+            breakdown = p.get_weekly_breakdown(year)
+            reg = [
+                item for item in breakdown
+                if item["week"] <= two_weeks_ago and not item["is_playoff"]
+            ]
+            playoff = [
+                item for item in breakdown
+                if item["week"] <= two_weeks_ago and item["is_playoff"]
+            ]
+            # Re-derive dropped week for this slice (same logic as the model)
+            dropped_week = None
+            if len(reg) >= 2:
+                min_score = min(item["score"] for item in reg)
+                for item in sorted(reg, key=lambda x: x["week"]):
+                    if item["score"] == min_score:
+                        dropped_week = item["week"]
+                        break
+            prior_scores[p.id] = sum(
+                item["score"] for item in reg if item["week"] != dropped_week
+            ) + sum(item["score"] for item in playoff)
+        sorted_prior = sorted(prior_scores.items(), key=lambda x: x[1], reverse=True)
+        prior_rank_map = {pid: rank + 1 for rank, (pid, _) in enumerate(sorted_prior)}
+
     opted_in = User.query.filter_by(active=True, get_email_reminder=True).all()
     click.echo(f"Opted-in users: {len(opted_in)}")
+
+    picks_url = url_for("game.week", year=year, week_num=upcoming_week_num, _external=True)
+    leaderboard_url = url_for("user.members", _external=True)
 
     for user in opted_in:
         user_prev_score = 0
@@ -418,10 +476,9 @@ def send_reminders(year, dry_run):
                     user_prev_rank = entry["rank"]
                     break
 
-        picks_url = url_for(
-            "game.week", year=year, week_num=upcoming_week_num, _external=True
-        )
-        leaderboard_url = url_for("user.members", _external=True)
+        current_rank = season_rank_map.get(user.id)
+        prior_rank = prior_rank_map.get(user.id)
+        rank_change = (prior_rank - current_rank) if (prior_rank and current_rank) else None
 
         context = {
             "user": user,
@@ -431,18 +488,18 @@ def send_reminders(year, dry_run):
             "user_prev_score": user_prev_score,
             "user_prev_rank": user_prev_rank,
             "top3_prev": top3_prev,
-            "season_rank": season_rank_map.get(user.id),
+            "season_rank": current_rank,
+            "rank_change": rank_change,
             "picks_url": picks_url,
             "leaderboard_url": leaderboard_url,
         }
 
         html_body = render_template("emails/weekly_reminder.html", **context)
-        text_body = render_template("emails/weekly_reminder.txt", **context)
         subject = f"UFA Picks — Week {upcoming_week_num} Reminder"
 
         if dry_run:
             click.echo(f"[DRY RUN] To: {user.email} | {subject}")
-            click.echo(text_body[:300])
+            click.echo(html_body[:300])
             click.echo("---")
             continue
 
@@ -451,7 +508,6 @@ def send_reminders(year, dry_run):
                 recipients=user.email,
                 subject=subject,
                 html_body=html_body,
-                text_body=text_body,
             )
             click.echo(f"Sent to {user.email}")
         except Exception as e:

@@ -37,7 +37,7 @@ def get_leaderboard_cache(year, week=None):
 @blueprint.app_context_processor
 def inject_user_stats():
     """Inject navigation bar stats for the current user into template context."""
-    if current_user.is_authenticated:
+    if current_user and current_user.is_authenticated:
         year = str(dt.datetime.now().year)
         lb = get_leaderboard_cache(year)
         for entry in lb:

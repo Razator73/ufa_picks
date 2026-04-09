@@ -43,7 +43,17 @@
 
   <h3>Season Standings</h3>
   {% if season_rank %}
-  <p>Your current season rank: <strong>#{{ season_rank }}</strong></p>
+  <p>Your current season rank: <strong>#{{ season_rank }}</strong>
+    {% if rank_change is not none and rank_change != 0 %}
+      {% if rank_change > 0 %}
+        <span style="color: #198754;">&#9650; {{ rank_change }} place{{ 's' if rank_change != 1 }}</span>
+      {% else %}
+        <span style="color: #dc3545;">&#9660; {{ rank_change | abs }} place{{ 's' if rank_change | abs != 1 }}</span>
+      {% endif %}
+    {% elif rank_change == 0 %}
+      <span style="color: #888;">(no change)</span>
+    {% endif %}
+  </p>
   {% endif %}
   <p><a href="{{ leaderboard_url }}">View the full season leaderboard</a></p>
 

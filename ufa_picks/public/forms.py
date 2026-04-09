@@ -42,7 +42,7 @@ class LoginForm(FlaskForm):
 class ForgotPasswordForm(FlaskForm):
     """Forgot password form."""
 
-    username = StringField("Username", validators=[DataRequired()])
+    username_or_email = StringField("Username or Email", validators=[DataRequired()])
 
 
 class ChangePasswordForm(FlaskForm):

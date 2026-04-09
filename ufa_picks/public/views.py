@@ -4,6 +4,8 @@ import datetime as dt
 import secrets
 import string
 
+from sqlalchemy import func
+
 from flask import (
     Blueprint,
     current_app,
@@ -65,11 +67,6 @@ def home():
         form=form,
         first_game_time=first_game_time,
     )
-    return render_template(
-        "public/home.html",
-        form=form,
-        first_game_time=first_game_time,
-    )
 
 
 @blueprint.route("/logout/")
@@ -84,7 +81,8 @@ def logout():
 @blueprint.route("/register/", methods=["GET", "POST"])
 def register():
     """Register new user."""
-    form = RegisterForm(request.form)
+    form = LoginForm(request.form)
+    register_form = RegisterForm(request.form)
     if form.validate_on_submit():
         User.create(
             username=form.username.data,
@@ -98,15 +96,21 @@ def register():
         return redirect(url_for("public.home"))
     else:
         flash_errors(form)
-    return render_template("public/register.html", form=form)
+    return render_template("public/register.html", form=form, register_form=register_form)
 
 
 @blueprint.route("/forgot-password/", methods=["GET", "POST"])
 def forgot_password():
     """Send a temporary password to the user's email."""
-    form = ForgotPasswordForm(request.form)
-    if request.method == "POST" and form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+    form = LoginForm(request.form)
+    forgot_form = ForgotPasswordForm(request.form)
+    if request.method == "POST" and forgot_form.validate_on_submit():
+        identifier = forgot_form.username_or_email.data.strip()
+        user = User.query.filter_by(username=identifier).first()
+        if not user:
+            user = User.query.filter(
+                func.lower(User.email) == identifier.lower()
+            ).first()
         if user and user.email:
             temp_password = "".join(
                 secrets.choice(string.ascii_letters + string.digits) for _ in range(10)
@@ -119,11 +123,11 @@ def forgot_password():
             except Exception:
                 current_app.logger.exception("Failed to send temp password email")
         flash(
-            "If that username exists, a temporary password has been sent to the associated email.",
+            "If that username/email exists, a temporary password has been sent to the associated email.",
             "info",
         )
         return redirect(url_for("public.home"))
-    return render_template("public/forgot_password.html", form=form)
+    return render_template("public/forgot_password.html", form=form, forgot_form=forgot_form)
 
 
 @blueprint.route("/change-password/", methods=["GET", "POST"])

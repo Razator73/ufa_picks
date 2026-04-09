@@ -54,12 +54,8 @@ def send_temp_password_email(user, temp_password):
     html_body = render_template(
         "emails/temp_password.html", user=user, temp_password=temp_password
     )
-    text_body = render_template(
-        "emails/temp_password.txt", user=user, temp_password=temp_password
-    )
     send_email(
         recipients=user.email,
         subject="UFA Picks — Password Reset",
         html_body=html_body,
-        text_body=text_body,
     )
