@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """Public section, including homepage and signup."""
 import datetime as dt
+import secrets
+import string
+
+from sqlalchemy import func
 
 from flask import (
     Blueprint,
@@ -11,11 +15,12 @@ from flask import (
     request,
     url_for,
 )
-from flask_login import login_required, login_user, logout_user
+from flask_login import current_user, login_required, login_user, logout_user
 
+from ufa_picks.email_utils import send_temp_password_email
 from ufa_picks.extensions import login_manager
 from ufa_picks.game.models import Game
-from ufa_picks.public.forms import LoginForm
+from ufa_picks.public.forms import ChangePasswordForm, ForgotPasswordForm, LoginForm
 from ufa_picks.user.forms import RegisterForm
 from ufa_picks.user.models import User
 from ufa_picks.utils import flash_errors
@@ -38,6 +43,9 @@ def home():
     if request.method == "POST":
         if form.validate_on_submit():
             login_user(form.user)
+            if form.user.force_password_change:
+                flash("Your password is temporary. Please set a new one.", "warning")
+                return redirect(url_for("public.change_password"))
             flash("You are logged in.", "success")
             redirect_url = request.args.get("next") or url_for("user.members")
             return redirect(redirect_url)
@@ -59,11 +67,6 @@ def home():
         form=form,
         first_game_time=first_game_time,
     )
-    return render_template(
-        "public/home.html",
-        form=form,
-        first_game_time=first_game_time,
-    )
 
 
 @blueprint.route("/logout/")
@@ -78,7 +81,8 @@ def logout():
 @blueprint.route("/register/", methods=["GET", "POST"])
 def register():
     """Register new user."""
-    form = RegisterForm(request.form)
+    form = LoginForm(request.form)
+    register_form = RegisterForm(request.form)
     if form.validate_on_submit():
         User.create(
             username=form.username.data,
@@ -92,7 +96,54 @@ def register():
         return redirect(url_for("public.home"))
     else:
         flash_errors(form)
-    return render_template("public/register.html", form=form)
+    return render_template("public/register.html", form=form, register_form=register_form)
+
+
+@blueprint.route("/forgot-password/", methods=["GET", "POST"])
+def forgot_password():
+    """Send a temporary password to the user's email."""
+    form = LoginForm(request.form)
+    forgot_form = ForgotPasswordForm(request.form)
+    if request.method == "POST" and forgot_form.validate_on_submit():
+        identifier = forgot_form.username_or_email.data.strip()
+        user = User.query.filter_by(username=identifier).first()
+        if not user:
+            user = User.query.filter(
+                func.lower(User.email) == identifier.lower()
+            ).first()
+        if user and user.email:
+            temp_password = "".join(
+                secrets.choice(string.ascii_letters + string.digits) for _ in range(10)
+            )
+            user.password = temp_password
+            user.force_password_change = True
+            user.save()
+            try:
+                send_temp_password_email(user, temp_password)
+            except Exception:
+                current_app.logger.exception("Failed to send temp password email")
+        flash(
+            "If that username/email exists, a temporary password has been sent to the associated email.",
+            "info",
+        )
+        return redirect(url_for("public.home"))
+    return render_template("public/forgot_password.html", form=form, forgot_form=forgot_form)
+
+
+@blueprint.route("/change-password/", methods=["GET", "POST"])
+@login_required
+def change_password():
+    """Force password change after temp password login."""
+    if not current_user.force_password_change:
+        return redirect(url_for("user.members"))
+    form = ChangePasswordForm(request.form)
+    if request.method == "POST" and form.validate_on_submit():
+        current_user.password = form.new_password.data
+        current_user.force_password_change = False
+        current_user.save()
+        flash("Password changed successfully.", "success")
+        return redirect(url_for("user.members"))
+    return render_template("public/change_password.html", form=form)
 
 
 @blueprint.route("/about/")

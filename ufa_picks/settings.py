@@ -23,3 +23,10 @@ CACHE_TYPE = (
     "flask_caching.backends.SimpleCache"  # Can be "MemcachedCache", "RedisCache", etc.
 )
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Email (SMTP)
+SMTP_HOST = env.str("SMTP_HOST", default=None)
+SMTP_PORT = env.int("SMTP_PORT", default=587)
+SMTP_USER = env.str("SMTP_USER", default=None)
+SMTP_TOKEN = env.str("SMTP_TOKEN", default=None)
+SERVER_NAME = env.str("SERVER_NAME", default=None)
