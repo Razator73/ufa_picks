@@ -31,6 +31,9 @@
             <a href="{{ url_for('user.members', tab='friends', year=year) }}"
               class="btn btn-info w-100 text-white">Friends Leaderboard</a>
           </div>
+          <div class="mt-2">
+            <a href="{{ url_for('user.edit_profile') }}" class="btn btn-outline-secondary w-100">Edit Profile</a>
+          </div>
           {% endif %}
         </div>
       </div>

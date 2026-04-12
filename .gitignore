@@ -57,3 +57,6 @@ prod.env
 
 # Development database
 *.db
+
+# Claude Code local settings
+.claude/settings.local.json

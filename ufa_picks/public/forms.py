@@ -2,7 +2,7 @@
 """Public forms."""
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, EqualTo, Length
 
 from ufa_picks.user.models import User
 
@@ -37,3 +37,21 @@ class LoginForm(FlaskForm):
             self.username.errors.append("User not activated")
             return False
         return True
+
+
+class ForgotPasswordForm(FlaskForm):
+    """Forgot password form."""
+
+    username_or_email = StringField("Username or Email", validators=[DataRequired()])
+
+
+class ChangePasswordForm(FlaskForm):
+    """Forced password change form (used after temp password login)."""
+
+    new_password = PasswordField(
+        "New Password", validators=[DataRequired(), Length(min=6, max=40)]
+    )
+    confirm = PasswordField(
+        "Confirm New Password",
+        validators=[DataRequired(), EqualTo("new_password", message="Passwords must match")],
+    )
