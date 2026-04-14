@@ -371,7 +371,7 @@ def send_reminders(year, dry_run, force):
     """Send weekly reminder emails to opted-in users.
 
     Designed to be run daily via cron. Emails are only sent when the first game
-    of the upcoming week is 20-28 hours away (i.e. the day before). Use --force
+    of the upcoming week is 20-36 hours away (i.e. the day before). Use --force
     to bypass this check.
     """
     import datetime as dt
@@ -402,7 +402,7 @@ def send_reminders(year, dry_run, force):
 
     upcoming_week_num = upcoming[0]
 
-    # Check timing: only send if the first game of the week is 20-28 hours away
+    # Check timing: only send if the first game of the week is 20-36 hours away
     if not force:
         first_game = (
             db.session.query(Game.start_timestamp)

@@ -16,7 +16,7 @@
 <body>
   <h2>Hi {{ user.first_name }},</h2>
 
-  <h3>Week {{ upcoming_week_num }} Picks Are Open</h3>
+  <h3>Week {{ upcoming_week_num }} Closing Soon</h3>
   <p>Don't forget to get your picks in before the week locks!</p>
   <a href="{{ picks_url }}" class="cta">Submit Week {{ upcoming_week_num }} Picks</a>
 
@@ -39,7 +39,6 @@
     {% endfor %}
   </table>
   {% endif %}
-  {% endif %}
 
   <h3>Season Standings</h3>
   {% if season_rank %}
@@ -56,6 +55,7 @@
   </p>
   {% endif %}
   <p><a href="{{ leaderboard_url }}">View the full season leaderboard</a></p>
+  {% endif %}
 
   <div class="footer">
     You're receiving this because you opted in to weekly reminders on UFA Picks.<br>
