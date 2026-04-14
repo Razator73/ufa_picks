@@ -88,6 +88,7 @@ def register_commands(app):
     app.cli.add_command(commands.sync_db)
     app.cli.add_command(commands.dummy_data)
     app.cli.add_command(commands.send_reminders)
+    app.cli.add_command(commands.send_welcome)
 
 
 def configure_logger(app):

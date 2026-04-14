@@ -187,6 +187,31 @@ def sync_db(table, all_tables):
     _perform_sync_insert(prod_engine, prod_metadata, tables_to_sync, qa_password_hash)
 
     db.session.commit()
+
+    # 3. Sync sequences from prod so dev IDs don't collide after insert
+    # Read MAX(id) from the table rather than last_value from the sequence
+    # to avoid needing SELECT privilege on the sequence objects.
+    sequence_tables = [
+        ("picks_id_seq", "picks"),
+        ("roles_id_seq", "roles"),
+        ("users_id_seq", "users"),
+    ]
+    with prod_engine.connect() as prod_conn:
+        with db.engine.connect() as dev_conn:
+            for seq, table in sequence_tables:
+                try:
+                    row = prod_conn.execute(
+                        text(f"SELECT COALESCE(MAX(id), 1) FROM {table}")
+                    ).fetchone()
+                    if row:
+                        dev_conn.execute(
+                            text(f"SELECT setval('{seq}', :val)"), {"val": row[0]}
+                        )
+                        dev_conn.commit()
+                        click.echo(f"Synced sequence {seq} to {row[0]}")
+                except Exception as e:
+                    click.echo(f"  -> Warning: Could not sync sequence {seq}: {e}")
+
     click.echo("Database sync complete.")
 
 
@@ -237,8 +262,10 @@ def _perform_sync_insert(prod_engine, prod_metadata, tables_to_sync, qa_password
                             if "password" in row_dict:
                                 row_dict["password"] = qa_password_hash
                             if "email" in row_dict:
-                                row_dict["email"] = f"test+{row_dict.get('first_name', 'user').lower().strip()}"\
-                                                    f"{row_dict['id']}@razator.com"
+                                row_dict["email"] = (
+                                    f"test+{row_dict.get('first_name', 'user').lower().strip()}"
+                                    f"{row_dict['id']}@razator.com"
+                                )
                         insert_data.append(row_dict)
 
                     chunk_size = 500
@@ -363,10 +390,46 @@ def dummy_data():
     click.echo("Done!")
 
 
+@click.command("send-welcome")
+@click.option("--dry-run", is_flag=True, help="Print without sending")
+@click.option(
+    "--username", default=None, help="Comma-separated list of usernames to send to"
+)
+def send_welcome(dry_run, username):
+    """Send the welcome email to existing users who never received one."""
+    from ufa_picks.email_utils import send_welcome_email
+    from ufa_picks.user.models import User
+
+    if username:
+        names = [n.strip() for n in username.split(",") if n.strip()]
+        users = User.query.filter(User.username.in_(names), User.active.is_(True)).all()
+        found = {u.username for u in users}
+        for name in names:
+            if name not in found:
+                click.echo(f"No active user found with username '{name}'.")
+        if not users:
+            return
+    else:
+        users = User.query.filter_by(active=True).order_by(User.id).all()
+
+    click.echo(f"Sending welcome email to {len(users)} user(s)...")
+    for user in users:
+        if dry_run:
+            click.echo(f"[DRY RUN] Would send to {user.username} <{user.email}>")
+            continue
+        try:
+            send_welcome_email(user, new_user=False)
+            click.echo(f"Sent to {user.username} <{user.email}>")
+        except Exception as e:
+            click.echo(f"Failed for {user.username}: {e}")
+
+
 @click.command("send-reminders")
 @click.option("--year", default=None, help="Season year (defaults to current year)")
 @click.option("--dry-run", is_flag=True, help="Print emails without sending")
-@click.option("--force", is_flag=True, help="Send regardless of timing (bypass day-before check)")
+@click.option(
+    "--force", is_flag=True, help="Send regardless of timing (bypass day-before check)"
+)
 def send_reminders(year, dry_run, force):
     """Send weekly reminder emails to opted-in users.
 
@@ -424,7 +487,9 @@ def send_reminders(year, dry_run, force):
     click.echo(f"Upcoming week: {upcoming_week_num}, Previous week: {prev_week_num}")
 
     # Build leaderboard data
-    prev_week_lb = get_leaderboard_cache(year, week=prev_week_num) if prev_week_num else []
+    prev_week_lb = (
+        get_leaderboard_cache(year, week=prev_week_num) if prev_week_num else []
+    )
     season_lb = get_leaderboard_cache(year)
     top3_prev = prev_week_lb[:3]
     season_rank_map = {entry["user"].id: entry["rank"] for entry in season_lb}
@@ -439,11 +504,13 @@ def send_reminders(year, dry_run, force):
         for p in all_players:
             breakdown = p.get_weekly_breakdown(year)
             reg = [
-                item for item in breakdown
+                item
+                for item in breakdown
                 if item["week"] <= two_weeks_ago and not item["is_playoff"]
             ]
             playoff = [
-                item for item in breakdown
+                item
+                for item in breakdown
                 if item["week"] <= two_weeks_ago and item["is_playoff"]
             ]
             # Re-derive dropped week for this slice (same logic as the model)
@@ -463,7 +530,9 @@ def send_reminders(year, dry_run, force):
     opted_in = User.query.filter_by(active=True, get_email_reminder=True).all()
     click.echo(f"Opted-in users: {len(opted_in)}")
 
-    picks_url = url_for("game.week", year=year, week_num=upcoming_week_num, _external=True)
+    picks_url = url_for(
+        "game.week", year=year, week_num=upcoming_week_num, _external=True
+    )
     leaderboard_url = url_for("user.members", _external=True)
 
     for user in opted_in:
@@ -478,7 +547,9 @@ def send_reminders(year, dry_run, force):
 
         current_rank = season_rank_map.get(user.id)
         prior_rank = prior_rank_map.get(user.id)
-        rank_change = (prior_rank - current_rank) if (prior_rank and current_rank) else None
+        rank_change = (
+            (prior_rank - current_rank) if (prior_rank and current_rank) else None
+        )
 
         context = {
             "user": user,
