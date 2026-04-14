@@ -76,7 +76,7 @@ def send_welcome_email(user, new_user=True):
         picks_url=picks_url,
         week_num=week_num,
         profile_url=profile_url,
-        new_user=new_user
+        new_user=new_user,
     )
     send_email(
         recipients=user.email,

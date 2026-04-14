@@ -59,7 +59,10 @@ class EditProfileForm(FlaskForm):
     )
     confirm_new_password = PasswordField(
         "Confirm New Password",
-        validators=[Optional(), EqualTo("new_password", message="Passwords must match")],
+        validators=[
+            Optional(),
+            EqualTo("new_password", message="Passwords must match"),
+        ],
     )
     get_email_reminder = BooleanField("Send me weekly email reminders")
 
