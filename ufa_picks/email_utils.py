@@ -50,7 +50,7 @@ def send_email(recipients, subject, html_body, text_body=None):
         raise
 
 
-def send_welcome_email(user):
+def send_welcome_email(user, new_user=True):
     """Send a welcome email to a newly registered user."""
     from ufa_picks.game.models import Game
 
@@ -76,6 +76,7 @@ def send_welcome_email(user):
         picks_url=picks_url,
         week_num=week_num,
         profile_url=profile_url,
+        new_user=new_user
     )
     send_email(
         recipients=user.email,

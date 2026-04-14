@@ -384,6 +384,34 @@ def dummy_data():
     click.echo("Done!")
 
 
+@click.command("send-welcome")
+@click.option("--dry-run", is_flag=True, help="Print without sending")
+@click.option("--username", default=None, help="Send only to this username")
+def send_welcome(dry_run, username):
+    """Send the welcome email to existing users who never received one."""
+    from ufa_picks.email_utils import send_welcome_email
+    from ufa_picks.user.models import User
+
+    if username:
+        users = User.query.filter_by(username=username, active=True).all()
+        if not users:
+            click.echo(f"No active user found with username '{username}'.")
+            return
+    else:
+        users = User.query.filter_by(active=True).order_by(User.id).all()
+
+    click.echo(f"Sending welcome email to {len(users)} user(s)...")
+    for user in users:
+        if dry_run:
+            click.echo(f"[DRY RUN] Would send to {user.username} <{user.email}>")
+            continue
+        try:
+            send_welcome_email(user, new_user=False)
+            click.echo(f"Sent to {user.username} <{user.email}>")
+        except Exception as e:
+            click.echo(f"Failed for {user.username}: {e}")
+
+
 @click.command("send-reminders")
 @click.option("--year", default=None, help="Season year (defaults to current year)")
 @click.option("--dry-run", is_flag=True, help="Print emails without sending")
