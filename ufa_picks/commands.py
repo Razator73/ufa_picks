@@ -386,16 +386,20 @@ def dummy_data():
 
 @click.command("send-welcome")
 @click.option("--dry-run", is_flag=True, help="Print without sending")
-@click.option("--username", default=None, help="Send only to this username")
+@click.option("--username", default=None, help="Comma-separated list of usernames to send to")
 def send_welcome(dry_run, username):
     """Send the welcome email to existing users who never received one."""
     from ufa_picks.email_utils import send_welcome_email
     from ufa_picks.user.models import User
 
     if username:
-        users = User.query.filter_by(username=username, active=True).all()
+        names = [n.strip() for n in username.split(",") if n.strip()]
+        users = User.query.filter(User.username.in_(names), User.active == True).all()
+        found = {u.username for u in users}
+        for name in names:
+            if name not in found:
+                click.echo(f"No active user found with username '{name}'.")
         if not users:
-            click.echo(f"No active user found with username '{username}'.")
             return
     else:
         users = User.query.filter_by(active=True).order_by(User.id).all()
