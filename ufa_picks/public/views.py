@@ -17,7 +17,7 @@ from flask import (
 )
 from flask_login import current_user, login_required, login_user, logout_user
 
-from ufa_picks.email_utils import send_temp_password_email
+from ufa_picks.email_utils import send_temp_password_email, send_welcome_email
 from ufa_picks.extensions import login_manager
 from ufa_picks.game.models import Game
 from ufa_picks.public.forms import ChangePasswordForm, ForgotPasswordForm, LoginForm
@@ -81,22 +81,25 @@ def logout():
 @blueprint.route("/register/", methods=["GET", "POST"])
 def register():
     """Register new user."""
-    form = LoginForm(request.form)
     register_form = RegisterForm(request.form)
-    if form.validate_on_submit():
-        User.create(
-            username=form.username.data,
-            first_name=form.first_name.data,
-            last_name=form.last_name.data,
-            email=form.email.data,
-            password=form.password.data,
+    if register_form.validate_on_submit():
+        user = User.create(
+            username=register_form.username.data,
+            first_name=register_form.first_name.data,
+            last_name=register_form.last_name.data,
+            email=register_form.email.data,
+            password=register_form.password.data,
             active=True,
         )
+        try:
+            send_welcome_email(user)
+        except Exception:
+            current_app.logger.exception("Failed to send welcome email to %s", user.email)
         flash("Thank you for registering. You can now log in.", "success")
         return redirect(url_for("public.home"))
     else:
-        flash_errors(form)
-    return render_template("public/register.html", form=form, register_form=register_form)
+        flash_errors(register_form)
+    return render_template("public/register.html", register_form=register_form)
 
 
 @blueprint.route("/forgot-password/", methods=["GET", "POST"])

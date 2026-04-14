@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; }
+    h2 { color: #1a1a2e; }
+    h3 { color: #333; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .cta { display: inline-block; background: #0d6efd; color: #fff !important; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 12px 0; }
+    .tip-box { background: #f8f9fa; border-left: 4px solid #0d6efd; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+    .footer { margin-top: 32px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Welcome to UFA Picks, {{ user.first_name }}!</h2>
+
+  <p>Thanks for joining our UFA Picks game. Each week you'll pick the winners and scores of UFA games — the more you get right,
+    the more points you earn. The picks each week will lock at the start of the first game of the week. So you can't edit
+    other games in the week once that first game starts. Once picks are locked you'll be able to click on the game and
+    see what the other players picked.
+  </p>
+  <p>You can also follow other users to create a friends ranking. You will be able to see how you stack up against players you follow. 
+    Feel free to invite your friends to join. This is just for fun and the prizes will be for overall placements.
+  </p>
+
+  <h3>How Scoring Works</h3>
+  <ul>
+    <li><strong>3 points</strong> for correctly picking the winning team</li>
+    <li><strong>Up to 2 bonus points</strong> (1 per team) for guessing the exact final score</li>
+    <li><strong>1 bonus point</strong> for guessing the exact margin of victory</li>
+  </ul>
+  <p>At the end of the regular season your lowest-scoring week is automatically dropped, so one rough week won't sink you.</p>
+
+  <h3>Prizes</h3>
+  <ul>
+    <li><strong>1st place</strong> — Jersey of your choice</li>
+    <li><strong>2nd &amp; 3rd place</strong> — Utah Jazz or Utah Mammoth hat</li>
+  </ul>
+
+  {% if picks_url %}
+  <h3>Get Your Picks In</h3>
+  <p>Week {{ week_num }} is open now. Don't miss it!</p>
+  <a href="{{ picks_url }}" class="cta">Submit Week {{ week_num }} Picks</a>
+  {% endif %}
+
+  <div class="tip-box">
+    <strong>Weekly reminders:</strong> Want a nudge before picks lock each week?
+    You can opt in to weekly reminder emails from your
+    <a href="{{ profile_url }}">profile settings</a>.
+  </div>
+
+  <p>Good luck this season!</p>
+
+  <div class="footer">
+    If you see any bugs or issues with the site let me know, ryan@razator.com.
+    You're receiving this because you just created a UFA Picks account.
+  </div>
+</body>
+</html>

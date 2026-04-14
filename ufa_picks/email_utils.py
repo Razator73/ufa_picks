@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Email utility functions."""
+import datetime as dt
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from flask import current_app, render_template
+from flask import current_app, render_template, url_for
 
 
 def send_email(recipients, subject, html_body, text_body=None):
@@ -47,6 +48,40 @@ def send_email(recipients, subject, html_body, text_body=None):
     except Exception as e:
         current_app.logger.exception(f"Failed to send email to {recipients}: {e}")
         raise
+
+
+def send_welcome_email(user):
+    """Send a welcome email to a newly registered user."""
+    from ufa_picks.game.models import Game
+
+    year = str(dt.datetime.now().year)
+    now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+    upcoming = (
+        Game.query.filter(Game.season == year, Game.start_timestamp > now)
+        .order_by(Game.week)
+        .first()
+    )
+
+    picks_url = None
+    week_num = None
+    if upcoming:
+        week_num = upcoming.week
+        picks_url = url_for("game.week", year=year, week_num=week_num, _external=True)
+
+    profile_url = url_for("user.edit_profile", _external=True)
+
+    html_body = render_template(
+        "emails/welcome.html",
+        user=user,
+        picks_url=picks_url,
+        week_num=week_num,
+        profile_url=profile_url,
+    )
+    send_email(
+        recipients=user.email,
+        subject="Welcome to UFA Picks!",
+        html_body=html_body,
+    )
 
 
 def send_temp_password_email(user, temp_password):

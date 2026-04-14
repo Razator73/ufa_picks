@@ -187,6 +187,27 @@ def sync_db(table, all_tables):
     _perform_sync_insert(prod_engine, prod_metadata, tables_to_sync, qa_password_hash)
 
     db.session.commit()
+
+    # 3. Sync sequences from prod so dev IDs don't collide after insert
+    # Read MAX(id) from the table rather than last_value from the sequence
+    # to avoid needing SELECT privilege on the sequence objects.
+    sequence_tables = [
+        ("picks_id_seq", "picks"),
+        ("roles_id_seq", "roles"),
+        ("users_id_seq", "users"),
+    ]
+    with prod_engine.connect() as prod_conn:
+        with db.engine.connect() as dev_conn:
+            for seq, table in sequence_tables:
+                try:
+                    row = prod_conn.execute(text(f"SELECT COALESCE(MAX(id), 1) FROM {table}")).fetchone()
+                    if row:
+                        dev_conn.execute(text(f"SELECT setval('{seq}', :val)"), {"val": row[0]})
+                        dev_conn.commit()
+                        click.echo(f"Synced sequence {seq} to {row[0]}")
+                except Exception as e:
+                    click.echo(f"  -> Warning: Could not sync sequence {seq}: {e}")
+
     click.echo("Database sync complete.")
 
 
