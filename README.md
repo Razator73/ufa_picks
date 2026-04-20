@@ -214,3 +214,18 @@ in ``.env``:
 ```text
 SEND_FILE_MAX_AGE_DEFAULT=31556926  # one year
 ```
+
+## Manage Command Reference
+
+All commands are run as `docker compose run --rm manage <command>`.
+
+| Command | Options | Description |
+|---|---|---|
+| `db init` / `db migrate` / `db upgrade` | | Database migrations |
+| `shell` | | Interactive Flask shell |
+| `test` | `--no-coverage`, `-k <expr>` | Run test suite |
+| `lint` | `--check` | Lint and format code |
+| `sync-db` | `--all-tables` / `-t <table>` | Sync dev DB from production |
+| `dummy-data` | | Seed DB with simulated games and picks |
+| `send-welcome` | `--username <name>`, `--dry-run` | Send welcome email to existing users |
+| `send-reminders` | `--year <year>`, `--force`, `--dry-run` | Send weekly reminder emails to opted-in users |
