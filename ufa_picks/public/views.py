@@ -26,6 +26,8 @@ from ufa_picks.utils import flash_errors
 
 blueprint = Blueprint("public", __name__, static_folder="../static")
 
+login_manager.login_view = "public.login"
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -68,6 +70,26 @@ def home():
     )
 
 
+@blueprint.route("/login/", methods=["GET", "POST"])
+def login():
+    """Dedicated login page."""
+    if current_user.is_authenticated:
+        return redirect(url_for("user.members"))
+    form = LoginForm(request.form)
+    if request.method == "POST":
+        if form.validate_on_submit():
+            login_user(form.user)
+            if form.user.force_password_change:
+                flash("Your password is temporary. Please set a new one.", "warning")
+                return redirect(url_for("public.change_password"))
+            flash("You are logged in.", "success")
+            redirect_url = request.args.get("next") or url_for("user.members")
+            return redirect(redirect_url)
+        else:
+            flash_errors(form)
+    return render_template("public/login.html", login_form=form)
+
+
 @blueprint.route("/logout/")
 @login_required
 def logout():
@@ -106,7 +128,6 @@ def register():
 @blueprint.route("/forgot-password/", methods=["GET", "POST"])
 def forgot_password():
     """Send a temporary password to the user's email."""
-    form = LoginForm(request.form)
     forgot_form = ForgotPasswordForm(request.form)
     if request.method == "POST" and forgot_form.validate_on_submit():
         identifier = forgot_form.username_or_email.data.strip()
@@ -132,7 +153,7 @@ def forgot_password():
         )
         return redirect(url_for("public.home"))
     return render_template(
-        "public/forgot_password.html", form=form, forgot_form=forgot_form
+        "public/forgot_password.html", forgot_form=forgot_form
     )
 
 
@@ -155,5 +176,4 @@ def change_password():
 @blueprint.route("/about/")
 def about():
     """About page."""
-    form = LoginForm(request.form)
-    return render_template("public/about.html", form=form)
+    return render_template("public/about.html")

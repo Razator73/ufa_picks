@@ -1,0 +1,23 @@
+
+{% extends "layout.html" %}
+{% block page_title %}Login{% endblock %}
+{% block content %}
+<div class="container-narrow">
+  <h1 class="mt-5">Login</h1>
+  <br/>
+  <form id="loginForm" class="form" method="POST" action="" role="form">
+    {{ login_form.csrf_token }}
+    <div class="form-group">
+      {{ login_form.username.label }}
+      {{ login_form.username(placeholder="Username", class_="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ login_form.password.label }}
+      {{ login_form.password(placeholder="Password", class_="form-control") }}
+    </div>
+    <p class="mt-3"><input class="btn btn-primary" type="submit" value="Login"></p>
+  </form>
+  <p><a href="{{ url_for('public.forgot_password') }}">Forgot your password?</a></p>
+  <p><em>Don't have an account?</em> <a href="{{ url_for('public.register') }}">Create one</a>.</p>
+</div>
+{% endblock %}
