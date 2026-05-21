@@ -172,36 +172,41 @@
                         statusSpan.innerText = 'Saving...';
                         statusSpan.className = 'save-status badge bg-info text-dark';
                         statusSpan.style.opacity = '1';
+                        if (homeScore == awayScore) {
+                            statusSpan.innerText = 'Error: A game tie?! What is this, soccer?';
+                            statusSpan.className = 'save-status badge bg-danger';
+                        } else {
 
-                        fetch(fetchUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken
-                            },
-                            body: JSON.stringify({
-                                home_team_score: homeScore,
-                                away_team_score: awayScore
+                            fetch(fetchUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    home_team_score: homeScore,
+                                    away_team_score: awayScore
+                                })
                             })
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.status === 'success') {
-                                    statusSpan.innerText = 'Saved!';
-                                    statusSpan.className = 'save-status badge bg-success';
-                                    setTimeout(() => {
-                                        statusSpan.style.opacity = '0';
-                                    }, 2000);
-                                } else {
-                                    statusSpan.innerText = 'Error: ' + data.message;
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        statusSpan.innerText = 'Saved!';
+                                        statusSpan.className = 'save-status badge bg-success';
+                                        setTimeout(() => {
+                                            statusSpan.style.opacity = '0';
+                                        }, 2000);
+                                    } else {
+                                        statusSpan.innerText = 'Error: ' + data.message;
+                                        statusSpan.className = 'save-status badge bg-danger';
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    statusSpan.innerText = 'Error saving';
                                     statusSpan.className = 'save-status badge bg-danger';
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                statusSpan.innerText = 'Error saving';
-                                statusSpan.className = 'save-status badge bg-danger';
-                            });
+                                });
+                        }
                     }
                 });
             });

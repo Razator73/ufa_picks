@@ -21,3 +21,11 @@ class GamePick(FlaskForm):
             NumberRange(min=0, max=None, message="Must be a non-negative number")
         ],
     )
+
+    def validate(self, **kwargs):
+        initial_validation = super(GamePick, self).validate()
+        if not initial_validation:
+            return False
+        if self.away_team_score.data == self.home_team_score.data:
+            return False
+        return True
