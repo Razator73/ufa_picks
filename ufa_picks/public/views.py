@@ -152,9 +152,7 @@ def forgot_password():
             "info",
         )
         return redirect(url_for("public.home"))
-    return render_template(
-        "public/forgot_password.html", forgot_form=forgot_form
-    )
+    return render_template("public/forgot_password.html", forgot_form=forgot_form)
 
 
 @blueprint.route("/change-password/", methods=["GET", "POST"])

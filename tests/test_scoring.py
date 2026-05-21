@@ -83,6 +83,33 @@ class TestScoring2026:
         db.session.commit()
         assert pick.points == 6  # 3 win + 1 home + 1 away + 1 margin
 
+        # Tie picked, home winner
+        pick.home_team_score = 10
+        pick.away_team_score = 10
+        db.session.commit()
+        assert pick.points == 0
+
+        game2 = Game(
+            id="GAME2",
+            home_team_id=team_a.id,
+            away_team_id=team_b.id,
+            home_score=6,
+            away_score=10,
+            status="Final",
+            week=1,
+            streaming_url="",
+            has_roster_report=False,
+            season="2026",
+        )
+        db.session.add(game2)
+        pick2 = Pick(user_id=user.id, game_id=game2.id)
+
+        # Tie picked, away winner
+        pick2.home_team_score = 10
+        pick2.away_team_score = 10
+        db.session.commit()
+        assert pick2.points == 0
+
     def test_2026_lowest_week_drop(self, db, setup_teams, user):
         """Test dropping the lowest week in 2026."""
         team_a, team_b = setup_teams

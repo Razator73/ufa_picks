@@ -296,6 +296,8 @@ class Pick(PkModel):
     @property
     def points(self):
         """Calculate points for the pick based on the game's actual results."""
+        if self.away_team_score == self.home_team_score:
+            return 0
         if self.game.status != "Final":
             return 0
         if not self.winner.id == self.game.winner.id:
