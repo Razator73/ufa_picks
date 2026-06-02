@@ -63,10 +63,30 @@ def home():
         else None
     )
 
+    # Find the current active week (In Progress first, then most recent Final)
+    current_week = None
+    in_progress = (
+        Game.query.filter_by(season=year, status="In Progress")
+        .order_by(Game.week)
+        .first()
+    )
+    if in_progress:
+        current_week = in_progress.week
+    else:
+        latest_final = (
+            Game.query.filter_by(season=year, status="Final")
+            .order_by(Game.week.desc())
+            .first()
+        )
+        if latest_final:
+            current_week = latest_final.week
+
     return render_template(
         "public/home.html",
         form=form,
         first_game_time=first_game_time,
+        current_week=current_week,
+        year=year,
     )
 
 

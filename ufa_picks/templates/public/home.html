@@ -1,54 +1,85 @@
 {% extends "layout.html" %}
+{% block body_class %}home-page{% endblock %}
 {% block content %}
-<!-- Main jumbotron for a primary marketing message or call to action -->
-<div class="jumbotron">
+
+<div class="ufa-hero">
   <div class="container">
+    <div class="row align-items-center">
 
-    <h1 class="display-3">Welcome to UFA Picks</h1>
+      <div class="col-lg-7">
+        <h1 class="display-5 mb-3">Welcome to <span style="color: var(--ufa-accent);">UFA Picks</span></h1>
+        <p class="lead mb-1">Predict scores for the matchups each week, earn points, and compete with friends throughout the UFA season.</p>
+        <p style="color: #94a3b8; font-size: 0.95rem;">Adjust your picks until the first game of each week kicks off. Once the first game starts, everyone's picks are revealed.</p>
 
-    <p>This is a site to help manage our picks for the UFA. Just as a fun little game.</p>
-    <p>All picks for a given week must be finalized before the first game of that week. You can edit your picks
-      up until that point. Once that first game starts, your picks are locked in and you can see others' picks.</p>
-    <p>In the 2026 season, games are scored as follows:</p>
-    <ul>
-      <li>3 points for correctly guessing the winning team</li>
-      <li>Up to 2 bonus points (1 point per team) for guessing their exact final score</li>
-      <li>1 bonus point for guessing the exact margin of victory</li>
-    </ul>
-    <p>At the end of the regular season, your lowest scoring week is automatically dropped! The playoffs will follow
-      through to crowning a champion.</p>
+        {% if first_game_time %}
+        <div id="countdown" class="ufa-countdown" data-time="{{ first_game_time }}">
+          <div class="countdown-label" id="countdown-label">Season Starts In</div>
+          <div class="countdown-timer" id="timer">...</div>
+          {% if current_week %}
+          <a id="week-btn" href="{{ url_for('game.week', year=year, week_num=current_week) }}"
+             class="btn btn-sm mt-3"
+             style="display:none; background: var(--ufa-accent); padding: 15px 30px;  color: #fff; border: none; font-weight: 600;">
+            GO TO THIS WEEK'S GAMES &rarr;
+          </a>
+          {% endif %}
+        </div>
+        <script>
+          (function () {
+            const timerElement = document.getElementById('timer');
+            const labelElement = document.getElementById('countdown-label');
+            const countdownContainer = document.getElementById('countdown');
+            const weekBtn = document.getElementById('week-btn');
+            const targetTime = new Date(countdownContainer.dataset.time).getTime();
 
-    {% if first_game_time %}
-    <div id="countdown" class="alert alert-info text-center" data-time="{{ first_game_time }}">
-      <h4>Season Starts In: <span id="timer"></span></h4>
+            function updateTimer() {
+              const now = new Date().getTime();
+              const distance = targetTime - now;
+              if (distance <= 0) {
+                labelElement.textContent = 'The Season Has Started!';
+                labelElement.style.color = 'var(--ufa-accent)';
+                labelElement.style.fontSize = '1.1rem';
+                timerElement.style.display = 'none';
+                if (weekBtn) weekBtn.style.display = 'inline-block';
+                clearInterval(interval);
+                return;
+              }
+              const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+              timerElement.innerText = days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's';
+            }
+
+            updateTimer();
+            const interval = setInterval(updateTimer, 1000);
+          })();
+        </script>
+        {% endif %}
+      </div>
+
+      <div class="col-lg-5 mt-4 mt-lg-0">
+        <div class="scoring-card">
+          <p class="text-uppercase mb-3" style="font-size: 0.8rem; letter-spacing: 0.1em; color: #94a3b8; font-weight: 600;">2026 Scoring</p>
+          <div class="scoring-item">
+            <span class="scoring-badge">3</span>
+            <span>Correctly guess the winning team</span>
+          </div>
+          <div class="scoring-item">
+            <span class="scoring-badge">+1</span>
+            <span>Exact score for each team <span style="color: #94a3b8;">(up to 2 bonus)</span></span>
+          </div>
+          <div class="scoring-item">
+            <span class="scoring-badge">+1</span>
+            <span>Exact margin of victory</span>
+          </div>
+          <div class="scoring-item">
+            <span>Your lowest-scoring week is automatically dropped.</span>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <script>
-      (function () {
-        const timerElement = document.getElementById('timer');
-        const countdownContainer = document.getElementById('countdown');
-        const targetTime = new Date(countdownContainer.dataset.time).getTime();
-
-        function updateTimer() {
-          const now = new Date().getTime();
-          const distance = targetTime - now;
-          if (distance <= 0) {
-            countdownContainer.innerHTML = "<h4>The season has started!</h4>";
-            return;
-          }
-          const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-          const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-          timerElement.innerText = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
-        }
-
-        updateTimer();
-        setInterval(updateTimer, 1000);
-      })();
-    </script>
-    {% endif %}
   </div>
-</div><!-- /.jumbotron -->
+</div>
 
 {% endblock %}
