@@ -35,23 +35,10 @@ def load_user(user_id):
     return User.get_by_id(int(user_id))
 
 
-@blueprint.route("/", methods=["GET", "POST"])
+@blueprint.route("/", methods=["GET"])
 def home():
     """Home page."""
-    form = LoginForm(request.form)
     current_app.logger.info("Hello from the home page!")
-    # Handle logging in
-    if request.method == "POST":
-        if form.validate_on_submit():
-            login_user(form.user)
-            if form.user.force_password_change:
-                flash("Your password is temporary. Please set a new one.", "warning")
-                return redirect(url_for("public.change_password"))
-            flash("You are logged in.", "success")
-            redirect_url = request.args.get("next") or url_for("user.members")
-            return redirect(redirect_url)
-        else:
-            flash_errors(form)
 
     year = str(dt.datetime.now().year)
     first_game = (
@@ -83,7 +70,6 @@ def home():
 
     return render_template(
         "public/home.html",
-        form=form,
         first_game_time=first_game_time,
         current_week=current_week,
         year=year,
@@ -98,7 +84,7 @@ def login():
     form = LoginForm(request.form)
     if request.method == "POST":
         if form.validate_on_submit():
-            login_user(form.user)
+            login_user(form.user, remember=True)
             if form.user.force_password_change:
                 flash("Your password is temporary. Please set a new one.", "warning")
                 return redirect(url_for("public.change_password"))
@@ -107,6 +93,7 @@ def login():
             return redirect(redirect_url)
         else:
             flash_errors(form)
+            return redirect(url_for("public.home", open_modal="login"))
     return render_template("public/login.html", login_form=form)
 
 
@@ -142,7 +129,7 @@ def register():
         return redirect(url_for("public.home"))
     else:
         flash_errors(register_form)
-    return render_template("public/register.html", register_form=register_form)
+        return redirect(url_for("public.home", open_modal="register"))
 
 
 @blueprint.route("/forgot-password/", methods=["GET", "POST"])
@@ -172,7 +159,7 @@ def forgot_password():
             "info",
         )
         return redirect(url_for("public.home"))
-    return render_template("public/forgot_password.html", forgot_form=forgot_form)
+    return redirect(url_for("public.home", open_modal="forgot"))
 
 
 @blueprint.route("/change-password/", methods=["GET", "POST"])
