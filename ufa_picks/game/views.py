@@ -53,18 +53,19 @@ def main(year):
             week_map[g.week] = {"statuses": set(), "first_game": g.start_timestamp}
         week_map[g.week]["statuses"].add(g.status)
 
+    # Assign the week's status.
     week_data = []
     for week_num in sorted(week_map)[:13]:
         statuses = week_map[week_num]["statuses"]
-        if "In Progress" in statuses:
-            badge = "in-progress"
-            label = "In Progress"
+        if all(s == "Upcoming" for s in statuses):
+            badge = "upcoming"
+            label = "Upcoming"
         elif all(s == "Final" for s in statuses):
             badge = "complete"
             label = "Complete"
         else:
-            badge = "upcoming"
-            label = "Upcoming"
+            badge = "in-progress"
+            label = "In Progress"
         week_data.append({"week": week_num, "badge": badge, "label": label})
 
     return render_template("games/games.html", week_data=week_data, year=season)

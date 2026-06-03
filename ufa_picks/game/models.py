@@ -23,6 +23,11 @@ class Team(Model):
         """Team full name."""
         return f"{self.team_city} {self.team_name}"
 
+    @property
+    def schedule_link(self):
+        """Hyper link to the team's schedule"""
+        return f'<a href="https://www.watchufa.com/{self.id}/schedule">{self.full_name}</a>'
+
     def wins(self, season):
         """Calculate wins for a season."""
         wins = 0

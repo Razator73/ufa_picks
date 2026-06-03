@@ -50,23 +50,27 @@ def home():
         else None
     )
 
-    # Find the current active week (In Progress first, then most recent Final)
-    current_week = None
-    in_progress = (
-        Game.query.filter_by(season=year, status="In Progress")
-        .order_by(Game.week)
+    # To pick current week it is the week that has a game in the future
+    # from 26 hours ago. This will hold current week the same for
+    # 26 hours after the last game of the week starts.
+    buffer = dt.timedelta(hours=26)
+    now = dt.datetime.now(dt.timezone.utc)
+    current_week_game = (
+        Game.query.filter(Game.season == year)
+        .filter(Game.start_timestamp > (now - buffer))
+        .order_by(Game.start_timestamp.asc())
         .first()
     )
-    if in_progress:
-        current_week = in_progress.week
+
+    if current_week_game:
+        current_week = current_week_game.week
     else:
-        latest_final = (
-            Game.query.filter_by(season=year, status="Final")
-            .order_by(Game.week.desc())
+        last_game = (
+            Game.query.filter(Game.season == year)
+            .order_by(Game.start_timestamp.desc())
             .first()
         )
-        if latest_final:
-            current_week = latest_final.week
+        current_week = last_game.week if last_game else None
 
     return render_template(
         "public/home.html",
