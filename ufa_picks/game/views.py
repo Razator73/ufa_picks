@@ -40,15 +40,34 @@ blueprint = Blueprint("game", __name__, url_prefix="/games", static_folder="../s
 @login_required
 def main(year):
     """List weeks."""
-    weeks = (
-        Game.query.filter_by(season=year if year else str(dt.datetime.now().year))
-        .with_entities(Game.week)
-        .distinct()
-        .order_by(Game.week)
+    season = year if year else str(dt.datetime.now().year)
+    games = (
+        Game.query.filter_by(season=season)
+        .order_by(Game.week, Game.start_timestamp)
         .all()
     )
-    weeks = [w[0] for w in weeks][:13]
-    return render_template("games/games.html", weeks=weeks, year=year)
+    # Build week summary: week_num -> {status, first_game_time}
+    week_map = {}
+    for g in games:
+        if g.week not in week_map:
+            week_map[g.week] = {"statuses": set(), "first_game": g.start_timestamp}
+        week_map[g.week]["statuses"].add(g.status)
+
+    week_data = []
+    for week_num in sorted(week_map)[:13]:
+        statuses = week_map[week_num]["statuses"]
+        if "In Progress" in statuses:
+            badge = "in-progress"
+            label = "In Progress"
+        elif all(s == "Final" for s in statuses):
+            badge = "complete"
+            label = "Complete"
+        else:
+            badge = "upcoming"
+            label = "Upcoming"
+        week_data.append({"week": week_num, "badge": badge, "label": label})
+
+    return render_template("games/games.html", week_data=week_data, year=season)
 
 
 def pre_lock(year, week_num):

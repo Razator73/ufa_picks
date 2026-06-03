@@ -43,8 +43,8 @@ GAME_TEMPLATE = [
     ("dc-breeze",      "chi-windchill", 4, -14, 18, 16, "Final"),
     ("sea-cascades",   "pit-thunderbirds",4,-14,21,17,  "Final"),
     ("den-summit",     "dal-roughnecks",4, -14, 19, 23, "Final"),
-    ("phi-phoenix",    "rdu-phoenix",   5,  -3, None, None, "In Progress"),
-    ("aus-sol",        "min-wind",      5,  -3, None, None, "In Progress"),
+    ("phi-phoenix",    "rdu-phoenix",   5,   2, None, None, "In Progress"),
+    ("aus-sol",        "min-wind",      5,   3, None, None, "In Progress"),
     ("ny-empire",      "atl-hustle",    6,   7, None, None, "Upcoming"),
     ("chi-windchill",  "dc-breeze",     6,   7, None, None, "Upcoming"),
 ]

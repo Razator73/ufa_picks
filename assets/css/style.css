@@ -216,7 +216,90 @@ footer {
   color: #64748b;
 }
 
-/* Auth modal tabs */
+/* ── Games page ─────────────────────────────────── */
+.games-heading {
+  font-family: 'Anton', 'Impact', sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ufa-dark);
+  margin-bottom: 1.5rem;
+}
+
+.week-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.week-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.week-btn:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: var(--ufa-primary);
+  text-decoration: none;
+}
+
+.week-btn__label {
+  font-family: 'Anton', 'Impact', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ufa-dark);
+  flex: 1;
+}
+
+.week-btn__badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.week-btn--complete .week-btn__badge {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.week-btn--in-progress .week-btn__badge {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.week-btn--upcoming .week-btn__badge {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.week-btn--in-progress {
+  border-color: #fde68a;
+}
+
+.week-btn__arrow {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  transition: color 0.1s;
+}
+
+.week-btn:hover .week-btn__arrow {
+  color: var(--ufa-primary);
+}
+
+/* ── Auth modal tabs ─────────────────────────────── */
 #authModal .nav-tabs {
   flex-wrap: nowrap;
   border-bottom-color: rgba(255,255,255,0.15);
