@@ -262,6 +262,21 @@ def game_details(year, game_id):
         )
         followed_picks.sort(key=lambda p: (-p.points, p.user.last_name))
 
+    partial = request.args.get("partial") == "1"
+
+    if partial:
+        # Load all picks (no pagination) for modal display
+        all_p = Pick.query.filter_by(game_id=game_id).join(User).all()
+        all_p.sort(key=lambda p: (-p.points, p.user.last_name))
+        return render_template(
+            "games/game_details_partial.html",
+            game=game,
+            all_picks=all_p,
+            followed_picks=followed_picks,
+            user_pick=user_pick,
+            year=year,
+        )
+
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
