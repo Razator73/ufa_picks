@@ -7,8 +7,8 @@
     {% endif %}
   </div>
   <div class="gd-at">
-    <span>@</span>
-    <div class="gd-status-pill gd-status--{{ game.status | lower | replace(' ', '-') }}">{{ game.status }}</div>
+    <div class="mb-1 gd-status-pill gd-status--{{ game.status | lower | replace(' ', '-') }}">{{ game.status }}</div>
+    <div>@</div>
   </div>
   <div class="gd-team {% if game.status == 'Final' and game.home_team.id == game.winner.id %}gd-team--winner{% endif %}">
     <div class="gd-team__name">{{ game.home_team.full_name }}</div>

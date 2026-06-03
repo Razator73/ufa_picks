@@ -596,3 +596,132 @@ footer .footer-nav {
   margin-right: 25px;
   list-style: none;
 }
+
+/* ── Leaderboard page ─────────────────────────────── */
+.lb-tabs {
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.lb-tabs .nav-link {
+  color: var(--ufa-text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.lb-tabs .nav-link:hover {
+  color: var(--ufa-primary);
+  border-bottom-color: #c7d7f8;
+}
+
+.lb-tabs .nav-link.active {
+  color: var(--ufa-primary);
+  background: transparent;
+  border-bottom: 2px solid var(--ufa-primary);
+}
+
+.lb-table-wrap {
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 0.5rem 0.5rem;
+  overflow: hidden;
+}
+
+.lb-table thead tr {
+  background: #f8fafc;
+}
+
+.lb-table thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.65rem 1rem;
+}
+
+.lb-table tbody td {
+  padding: 0.7rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.lb-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.lb-row--me td {
+  background: #eff6ff;
+}
+
+.lb-divider td {
+  background: #fafafa;
+  border-top: 1px dashed #e2e8f0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+/* ── Profile page ─────────────────────────────────── */
+.prof-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.prof-card__header {
+  background: var(--ufa-dark);
+  color: #fff;
+  padding: 1.5rem 1.25rem 1rem;
+}
+
+.prof-card__name {
+  font-family: 'Anton', 'Impact', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.prof-card__username {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 0.25rem;
+}
+
+.prof-card__stats {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.prof-stat {
+  flex: 1;
+  text-align: center;
+  padding: 0.9rem 0.5rem;
+}
+
+.prof-stat + .prof-stat {
+  border-left: 1px solid #e2e8f0;
+}
+
+.prof-stat__value {
+  font-family: 'Anton', 'Impact', sans-serif;
+  font-size: 1.6rem;
+  color: var(--ufa-primary);
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.prof-stat__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+.prof-card__actions {
+  padding: 1rem 1.25rem;
+}
