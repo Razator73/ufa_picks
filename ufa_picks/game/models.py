@@ -26,7 +26,7 @@ class Team(Model):
     @property
     def schedule_link(self):
         """Hyper link to the team's schedule"""
-        return f'<a href="https://www.watchufa.com/{self.id}/schedule">{self.full_name}</a>'
+        return f'<a href="https://www.watchufa.com/{self.id}/schedule" target="_blank" rel="noopener">{self.full_name}</a>'
 
     def wins(self, season):
         """Calculate wins for a season."""
