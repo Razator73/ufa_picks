@@ -35,10 +35,23 @@ def load_user(user_id):
     return User.get_by_id(int(user_id))
 
 
-@blueprint.route("/", methods=["GET"])
+@blueprint.route("/", methods=["GET", "POST"])
 def home():
     """Home page."""
+    form = LoginForm(request.form)
     current_app.logger.info("Hello from the home page!")
+    # Handle logging in
+    if request.method == "POST":
+        if form.validate_on_submit():
+            login_user(form.user)
+            if form.user.force_password_change:
+                flash("Your password is temporary. Please set a new one.", "warning")
+                return redirect(url_for("public.change_password"))
+            flash("You are logged in.", "success")
+            redirect_url = request.args.get("next") or url_for("user.members")
+            return redirect(redirect_url)
+        else:
+            flash_errors(form)
 
     year = str(dt.datetime.now().year)
     first_game = (
@@ -50,33 +63,10 @@ def home():
         else None
     )
 
-    # To pick current week it is the week that has a game in the future
-    # from 26 hours ago. This will hold current week the same for
-    # 26 hours after the last game of the week starts.
-    buffer = dt.timedelta(hours=26)
-    now = dt.datetime.now(dt.timezone.utc)
-    current_week_game = (
-        Game.query.filter(Game.season == year)
-        .filter(Game.start_timestamp > (now - buffer))
-        .order_by(Game.start_timestamp.asc())
-        .first()
-    )
-
-    if current_week_game:
-        current_week = current_week_game.week
-    else:
-        last_game = (
-            Game.query.filter(Game.season == year)
-            .order_by(Game.start_timestamp.desc())
-            .first()
-        )
-        current_week = last_game.week if last_game else None
-
     return render_template(
         "public/home.html",
+        form=form,
         first_game_time=first_game_time,
-        current_week=current_week,
-        year=year,
     )
 
 
@@ -88,7 +78,7 @@ def login():
     form = LoginForm(request.form)
     if request.method == "POST":
         if form.validate_on_submit():
-            login_user(form.user, remember=True)
+            login_user(form.user)
             if form.user.force_password_change:
                 flash("Your password is temporary. Please set a new one.", "warning")
                 return redirect(url_for("public.change_password"))
@@ -97,7 +87,6 @@ def login():
             return redirect(redirect_url)
         else:
             flash_errors(form)
-            return redirect(url_for("public.home", open_modal="login"))
     return render_template("public/login.html", login_form=form)
 
 
@@ -133,7 +122,7 @@ def register():
         return redirect(url_for("public.home"))
     else:
         flash_errors(register_form)
-        return redirect(url_for("public.home", open_modal="register"))
+    return render_template("public/register.html", register_form=register_form)
 
 
 @blueprint.route("/forgot-password/", methods=["GET", "POST"])
@@ -163,7 +152,7 @@ def forgot_password():
             "info",
         )
         return redirect(url_for("public.home"))
-    return redirect(url_for("public.home", open_modal="forgot"))
+    return render_template("public/forgot_password.html", forgot_form=forgot_form)
 
 
 @blueprint.route("/change-password/", methods=["GET", "POST"])

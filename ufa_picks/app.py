@@ -28,7 +28,6 @@ def create_app(config_object="ufa_picks.settings"):
     app.config.from_object(config_object)
     register_extensions(app)
     register_blueprints(app)
-    register_context_processors(app)
     register_errorhandlers(app)
     register_shellcontext(app)
     register_commands(app)
@@ -55,19 +54,6 @@ def register_blueprints(app):
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(game.views.blueprint)
     app.register_blueprint(user.views.blueprint)
-    return None
-
-
-def register_context_processors(app):
-    """Register template context processors."""
-    @app.context_processor
-    def inject_auth_forms():
-        from ufa_picks.public.forms import LoginForm
-        from ufa_picks.user.forms import RegisterForm
-        return {
-            'modal_login_form': LoginForm(),
-            'modal_register_form': RegisterForm(),
-        }
     return None
 
 
