@@ -23,14 +23,12 @@
   <meta name="viewport" content="width=device-width" />
 
   <link rel="stylesheet" type="text/css" href="{{ static_url_for('static', filename='build/main_css.bundle.css') }}" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
 
   {% block css %}{% endblock %}
 </head>
 
-<body class="{% block body_class %}{% endblock %}{% if not current_user or not current_user.is_authenticated %} nav-single-row{% endif %}">
-  {% block body %} {% include "nav.html" %}
+<body class="{% block body_class %}{% endblock %}">
+  {% block body %} {% with form=form %} {% include "nav.html" %} {% endwith %}
 
   <header>{% block header %}{% endblock %}</header>
 
@@ -53,121 +51,12 @@
     {% endif %} {% endwith %} {% block content %}{% endblock %}
   </main>
 
-  <!-- Auth Modal -->
-  <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content bg-dark text-white">
-        <div class="modal-header border-secondary pb-0">
-          <ul class="nav nav-tabs" id="authTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#loginPane" type="button" role="tab">Sign In</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#registerPane" type="button" role="tab">Create Account</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="forgot-tab" data-bs-toggle="tab" data-bs-target="#forgotPane" type="button" role="tab">Forgot Password</button>
-            </li>
-          </ul>
-          <button type="button" class="btn-close btn-close-white ms-auto mb-2" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="tab-content" id="authTabContent">
-
-            <!-- Login Pane -->
-            <div class="tab-pane fade show active" id="loginPane" role="tabpanel">
-              <form method="POST" action="{{ url_for('public.login') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div class="mb-3">
-                  <label class="form-label">Username</label>
-                  <input type="text" name="username" class="form-control bg-secondary text-white border-secondary" required />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Password</label>
-                  <input type="password" name="password" class="form-control bg-secondary text-white border-secondary" required />
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <button type="submit" class="btn btn-primary">Sign In</button>
-                  <button type="button" class="btn btn-link text-white-50 small p-0" onclick="document.getElementById('forgot-tab').click()">Forgot password?</button>
-                </div>
-              </form>
-            </div>
-
-            <!-- Register Pane -->
-            <div class="tab-pane fade" id="registerPane" role="tabpanel">
-              <form method="POST" action="{{ url_for('public.register') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div class="row g-2 mb-2">
-                  <div class="col">
-                    <label class="form-label">First Name</label>
-                    <input type="text" name="first_name" class="form-control bg-secondary text-white border-secondary" required />
-                  </div>
-                  <div class="col">
-                    <label class="form-label">Last Name</label>
-                    <input type="text" name="last_name" class="form-control bg-secondary text-white border-secondary" required />
-                  </div>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label">Username</label>
-                  <input type="text" name="username" class="form-control bg-secondary text-white border-secondary" required />
-                </div>
-                <div class="mb-2">
-                  <label class="form-label">Email</label>
-                  <input type="email" name="email" class="form-control bg-secondary text-white border-secondary" required />
-                </div>
-                <div class="mb-2">
-                  <label class="form-label">Password</label>
-                  <input type="password" name="password" class="form-control bg-secondary text-white border-secondary" required />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Confirm Password</label>
-                  <input type="password" name="confirm" class="form-control bg-secondary text-white border-secondary" required />
-                </div>
-                <button type="submit" class="btn btn-success w-100">Create Account</button>
-              </form>
-            </div>
-
-            <!-- Forgot Password Pane -->
-            <div class="tab-pane fade" id="forgotPane" role="tabpanel">
-              <p class="text-white-50 small mb-3">Enter your username or email and we'll send a temporary password.</p>
-              <form method="POST" action="{{ url_for('public.forgot_password') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div class="mb-3">
-                  <label class="form-label">Username or Email</label>
-                  <input type="text" name="username_or_email" class="form-control bg-secondary text-white border-secondary" required />
-                </div>
-                <button type="submit" class="btn btn-primary w-100">Send Temporary Password</button>
-              </form>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   {% include "footer.html" %}
   {{ moment.include_moment() }}
 
   <!-- JavaScript at the bottom for fast page loading -->
   <script src="{{ static_url_for('static', filename='build/main_js.bundle.js') }}"></script>
   {% block js %}{% endblock %}
-  <script>
-    (function () {
-      var params = new URLSearchParams(window.location.search);
-      var openModal = params.get('open_modal');
-      if (openModal === 'login' || openModal === 'register' || openModal === 'forgot') {
-        var modalEl = document.getElementById('authModal');
-        var modal = new bootstrap.Modal(modalEl);
-        if (openModal === 'register') {
-          new bootstrap.Tab(document.getElementById('register-tab')).show();
-        } else if (openModal === 'forgot') {
-          new bootstrap.Tab(document.getElementById('forgot-tab')).show();
-        }
-        modal.show();
-      }
-    })();
-  </script>
   <!-- end scripts -->
   {% endblock %}
 </body>

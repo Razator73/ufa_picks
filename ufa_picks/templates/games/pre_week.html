@@ -1,151 +1,216 @@
 {% extends "layout.html" %}
-{% block page_title %}Week {{ week_num }} — UFA Picks{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <div class="row">
-    <!-- Main Game List -->
-    <div class="col-lg-8">
-      <h1 class="games-heading">Week {{ week_num }}</h1>
+<div class="container">
+    <div class="row">
+        <!-- Main Game List -->
+        <div class="col-lg-8">
+            <h1 class="mb-4">UFA Games Week {{ week_num }}</h1>
 
-      <form method="POST" id="picksForm">
-        {{ form.hidden_tag() }}
-        {% for g_data in games %}
-        {% set game = g_data['game'] %}
-        {% set g_form = g_data['form'] %}
+            <form method="POST" id="picksForm">
+                {{ form.hidden_tag() }}
+                {% for g_data in games %}
+                {% set game = g_data['game'] %}
+                {% set g_form = g_data['form'] %}
 
-        <div class="wk-card game-card mb-3" data-game-id="{{ game.id }}">
-          <div class="wk-card__header">
-            <span class="wk-card__matchup-label">Matchup</span>
-            <small class="wk-card__time">Starts {{ moment(game.start_timestamp).fromNow() }}</small>
-          </div>
-          <div class="wk-card__body">
-            <div class="row align-items-center text-center g-2">
-              <div class="col-5">
-                <div class="wk-team">{{ game.away_team.schedule_link | safe }}</div>
-                <div class="wk-record">{{ game.away_team.record(year) }}</div>
-                {{ g_form.away_team_score(class="form-control form-control-lg text-center mx-auto wk-score-input", style="max-width:90px;") }}
-              </div>
-              <div class="col-2">
-                <span class="wk-at">@</span>
-              </div>
-              <div class="col-5">
-                <div class="wk-team">{{ game.home_team.schedule_link | safe }}</div>
-                <div class="wk-record">{{ game.home_team.record(year) }}</div>
-                {{ g_form.home_team_score(class="form-control form-control-lg text-center mx-auto wk-score-input", style="max-width:90px;") }}
-              </div>
+                <div class="card mb-4 shadow-sm game-card" data-game-id="{{ game.id }}">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Week {{ game.week }} Matchup</span>
+                        <small>Starts {{ moment(game.start_timestamp).fromNow() }}</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center text-center">
+                            <!-- Away Team -->
+                            <div class="col-md-4">
+                                <h5 class="mb-1">{{ game.away_team.full_name }}</h5>
+                                <div class="text-muted small mb-2">{{ game.away_team.record(year) }}</div>
+                                {{ g_form.away_team_score(class="form-control form-control-lg text-center mx-auto",
+                                style="max-width: 100px;") }}
+                            </div>
+
+                            <div class="col-md-2">
+                                <span class="fs-4 text-muted">@</span>
+                            </div>
+
+                            <!-- Home Team -->
+                            <div class="col-md-4">
+                                <h5 class="mb-1">{{ game.home_team.full_name }}</h5>
+                                <div class="text-muted small mb-2">{{ game.home_team.record(year) }}</div>
+                                {{ g_form.home_team_score(class="form-control form-control-lg text-center mx-auto",
+                                style="max-width: 100px;") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            <i class="bi bi-clock"></i> {{ moment(game.start_timestamp).format('LLL') }}
+                        </div>
+                        <div class="save-status-container">
+                            <span class="save-status badge rounded-pill" style="opacity: 0; transition: opacity 0.3s;">
+                                Saved!
+                            </span>
+                        </div>
+                    </div>
+                    {{ g_form.game_id(value=game.id, type="hidden") }}
+                </div>
+                {% endfor %}
+
+                <div class="alert alert-warning shadow-sm mt-4">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Picks can be edited until the first game of the week starts
+                    <strong>({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }})</strong>.
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Friends Standings -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Friends Standings</h5>
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th class="text-end">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in followed_season_ranked %}
+                            <tr {% if current_user.id==entry.user.id %}class="table-primary fw-bold" {% endif %}>
+                                <td>#{{ entry.rank }}</td>
+                                <td>
+                                    <a href="{{ url_for('user.profile', user_id=entry.user.id) }}"
+                                        class="text-decoration-none">
+                                        {{ entry.user.full_name }}
+                                    </a>
+                                </td>
+                                <td class="text-end">{{ entry.score }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-          </div>
-          <div class="wk-card__footer">
-            <span class="save-status badge rounded-pill" style="opacity:0;transition:opacity 0.3s;">Saved!</span>
-          </div>
-          {{ g_form.game_id(value=game.id, type="hidden") }}
-        </div>
-        {% endfor %}
 
-        <div class="wk-lock-notice">
-          <i class="fa-solid fa-clock me-2"></i>
-          Picks lock when the first game starts
-          <strong>({{ moment(games[0]['game'].start_timestamp).fromNow(refresh=True) }})</strong>.
+            <!-- Season Leaderboard -->
+            <div class="card shadow-sm sticky-top" style="top: 20px; z-index: 100;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Season Standings (Top 7)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th class="text-end">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in season_ranked %}
+                            <tr {% if current_user.id==entry.user.id %}class="table-primary fw-bold" {% endif %}>
+                                <td>#{{ loop.index }}</td>
+                                <td>
+                                    <a href="{{ url_for('user.profile', user_id=entry.user.id) }}"
+                                        class="text-decoration-none">
+                                        {{ entry.user.full_name }}
+                                    </a>
+                                </td>
+                                <td class="text-end">{{ entry.score }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('user.members', tab='all', year=year) }}" class="small text-decoration-none">
+                        View Full Leaderboard
+                    </a>
+                </div>
+            </div>
         </div>
-      </form>
     </div>
-
-    <!-- Sidebar -->
-    <div class="col-lg-4 mt-4 mt-lg-0">
-      <div class="wk-sidebar-card mb-3">
-        <div class="wk-sidebar-card__header">Friends Standings</div>
-        <table class="table table-sm table-hover mb-0">
-          <thead class="table-light"><tr><th>#</th><th>Player</th><th class="text-end">Pts</th></tr></thead>
-          <tbody>
-            {% for entry in followed_season_ranked %}
-            <tr {% if current_user.id == entry.user.id %}class="table-primary fw-bold"{% endif %}>
-              <td>{{ entry.rank }}</td>
-              <td><a href="{{ url_for('user.profile', user_id=entry.user.id) }}" class="text-decoration-none">{{ entry.user.full_name }}</a></td>
-              <td class="text-end">{{ entry.score }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="wk-sidebar-card">
-        <div class="wk-sidebar-card__header wk-sidebar-card__header--dark">Season Top 7</div>
-        <table class="table table-sm table-hover mb-0">
-          <thead class="table-light"><tr><th>#</th><th>Player</th><th class="text-end">Pts</th></tr></thead>
-          <tbody>
-            {% for entry in season_ranked %}
-            <tr {% if current_user.id == entry.user.id %}class="table-primary fw-bold"{% endif %}>
-              <td>{{ loop.index }}</td>
-              <td><a href="{{ url_for('user.profile', user_id=entry.user.id) }}" class="text-decoration-none">{{ entry.user.full_name }}</a></td>
-              <td class="text-end">{{ entry.score }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class="wk-sidebar-card__footer">
-          <a href="{{ url_for('user.members', tab='all', year=year) }}" class="small text-decoration-none">View Full Leaderboard</a>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}
 
 {% block js %}
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const csrfTokenInput = document.querySelector('input[name="token-csrf_token"]') || document.querySelector('input[name="csrf_token"]');
-    const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
-    const updateUrlBase = "{{ url_for('game.update_pick', game_id='PLACEHOLDER') }}";
+    document.addEventListener('DOMContentLoaded', () => {
+        // Get CSRF token
+        const csrfTokenInput = document.querySelector('input[name="token-csrf_token"]') || document.querySelector('input[name="csrf_token"]');
+        const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
 
-    document.querySelectorAll('.game-card').forEach(card => {
-      const gameId = card.getAttribute('data-game-id');
-      const fetchUrl = updateUrlBase.replace('PLACEHOLDER', gameId);
-      const inputs = card.querySelectorAll('input[type="number"], input[type="text"]');
-      const statusSpan = card.querySelector('.save-status');
+        const gameCards = document.querySelectorAll('.game-card');
+        const updateUrlBase = "{{ url_for('game.update_pick', game_id='PLACEHOLDER') }}";
 
-      inputs.forEach(input => {
-        input.addEventListener('change', () => {
-          let homeScore = '', awayScore = '';
-          inputs.forEach(gi => {
-            if (gi.name.includes('home_team_score')) homeScore = gi.value;
-            if (gi.name.includes('away_team_score')) awayScore = gi.value;
-          });
-          if (homeScore === '' || awayScore === '') return;
-          if (homeScore == awayScore) {
-            statusSpan.innerText = 'Error: A tie?! What is this, soccer?';
-            statusSpan.className = 'save-status badge bg-danger';
-            statusSpan.style.opacity = '1';
-            return;
-          }
-          statusSpan.innerText = 'Saving…';
-          statusSpan.className = 'save-status badge bg-info text-dark';
-          statusSpan.style.opacity = '1';
-          fetch(fetchUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify({ home_team_score: homeScore, away_team_score: awayScore })
-          })
-            .then(r => r.json())
-            .then(data => {
-              if (data.status === 'success') {
-                statusSpan.innerText = 'Saved!';
-                statusSpan.className = 'save-status badge bg-success';
-                setTimeout(() => { statusSpan.style.opacity = '0'; }, 2000);
-              } else {
-                statusSpan.innerText = 'Error: ' + data.message;
-                statusSpan.className = 'save-status badge bg-danger';
-              }
-            })
-            .catch(() => {
-              statusSpan.innerText = 'Error saving';
-              statusSpan.className = 'save-status badge bg-danger';
+        gameCards.forEach(card => {
+            const gameId = card.getAttribute('data-game-id');
+            const fetchUrl = updateUrlBase.replace('PLACEHOLDER', gameId);
+            const inputs = card.querySelectorAll('input[type="number"], input[type="text"]');
+            const statusSpan = card.querySelector('.save-status');
+
+            inputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    let homeScore = '';
+                    let awayScore = '';
+
+                    inputs.forEach(gi => {
+                        if (gi.name.includes('home_team_score')) homeScore = gi.value;
+                        if (gi.name.includes('away_team_score')) awayScore = gi.value;
+                    });
+
+                    const bothFilled = (homeScore !== '' && awayScore !== '');
+
+                    if (bothFilled) {
+                        // Show saving indicator if both are filled
+                        statusSpan.innerText = 'Saving...';
+                        statusSpan.className = 'save-status badge bg-info text-dark';
+                        statusSpan.style.opacity = '1';
+                        if (homeScore == awayScore) {
+                            statusSpan.innerText = 'Error: A game tie?! What is this, soccer?';
+                            statusSpan.className = 'save-status badge bg-danger';
+                        } else {
+
+                            fetch(fetchUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    home_team_score: homeScore,
+                                    away_team_score: awayScore
+                                })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        statusSpan.innerText = 'Saved!';
+                                        statusSpan.className = 'save-status badge bg-success';
+                                        setTimeout(() => {
+                                            statusSpan.style.opacity = '0';
+                                        }, 2000);
+                                    } else {
+                                        statusSpan.innerText = 'Error: ' + data.message;
+                                        statusSpan.className = 'save-status badge bg-danger';
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    statusSpan.innerText = 'Error saving';
+                                    statusSpan.className = 'save-status badge bg-danger';
+                                });
+                        }
+                    }
+                });
             });
         });
-      });
     });
-  });
 </script>
 {% endblock %}
-
-            

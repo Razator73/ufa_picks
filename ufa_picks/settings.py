@@ -6,8 +6,6 @@ Most configuration is set via environment variables.
 For local development, use a .env file to set
 environment variables.
 """
-import datetime
-
 from environs import Env
 
 env = Env()
@@ -25,11 +23,6 @@ CACHE_TYPE = (
     "flask_caching.backends.SimpleCache"  # Can be "MemcachedCache", "RedisCache", etc.
 )
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-# Session / auth
-REMEMBER_COOKIE_DURATION = datetime.timedelta(days=30)
-REMEMBER_COOKIE_HTTPONLY = True
-REMEMBER_COOKIE_SECURE = ENV == "production"
 
 # Email (SMTP)
 SMTP_HOST = env.str("SMTP_HOST", default=None)
