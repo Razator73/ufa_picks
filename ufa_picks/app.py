@@ -34,6 +34,13 @@ def create_app(config_object="ufa_picks.settings"):
     register_commands(app)
     configure_logger(app)
     Moment(app)
+
+    @app.after_request
+    def set_html_cache_headers(response):
+        if response.content_type.startswith("text/html"):
+            response.cache_control.no_store = True
+        return response
+
     return app
 
 
