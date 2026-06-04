@@ -1,10 +1,16 @@
 {% extends "layout.html" %}
+{% block page_title %}Games — UFA Picks{% endblock %}
 {% block content %}
-    <div class="container">
-        <h1>UFA Games by Week</h1>
-        {% for week in weeks %}
-          <li><a href="{{ url_for('game.week', week_num=week, year=year) }}">
-            Week {{ week }}</a></li>
-        {% endfor %}
-    </div>
+<div class="container py-4">
+  <h1 class="games-heading">{{ year }} Season</h1>
+  <div class="week-list">
+    {% for w in week_data %}
+    <a href="{{ url_for('game.week', week_num=w.week, year=year) }}" class="week-btn week-btn--{{ w.badge }}">
+      <span class="week-btn__label">Week {{ w.week }}</span>
+      <span class="week-btn__badge">{{ w.label }}</span>
+      <i class="fa-solid fa-chevron-right week-btn__arrow"></i>
+    </a>
+    {% endfor %}
+  </div>
+</div>
 {% endblock %}
