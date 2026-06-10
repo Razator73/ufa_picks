@@ -105,6 +105,16 @@ class User(UserMixin, PkModel):
         )
         active_weeks = [w[0] for w in active_weeks_query.all()]
 
+        # Weeks with any non-Final games are still in progress and not drop candidates.
+        incomplete_weeks = {
+            w[0]
+            for w in db.session.query(Game.week)
+            .filter(Game.season == year, Game.week <= 13, Game.status != "Final")
+            .distinct()
+            .all()
+        }
+        completed_weeks = set(active_weeks) - incomplete_weeks
+
         # Initialize scores with 0 for all active weeks to account for missed weeks
         reg_season_scores = {w: 0 for w in active_weeks}
         playoff_scores = {}
@@ -119,12 +129,13 @@ class User(UserMixin, PkModel):
                     playoff_scores[w] = playoff_scores.get(w, 0) + p.points
 
         dropped_week = None
-        # Drop lowest regular season week if at least 2 weeks have occurred
-        if len(reg_season_scores) > 1:
-            lowest_val = min(reg_season_scores.values())
+        # Only drop the lowest week once at least 2 weeks are fully completed.
+        if len(completed_weeks) > 1:
+            completed_scores = {w: reg_season_scores[w] for w in completed_weeks}
+            lowest_val = min(completed_scores.values())
             # Find the earliest week with that lowest score to drop
-            for w in sorted(reg_season_scores.keys()):
-                if reg_season_scores[w] == lowest_val:
+            for w in sorted(completed_scores.keys()):
+                if completed_scores[w] == lowest_val:
                     dropped_week = w
                     break
 
