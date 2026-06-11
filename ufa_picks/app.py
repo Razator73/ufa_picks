@@ -69,6 +69,9 @@ def register_context_processors(app):
     """Register template context processors."""
     @app.context_processor
     def inject_auth_forms():
+        from flask import has_request_context
+        if not has_request_context():
+            return {}
         from ufa_picks.public.forms import LoginForm
         from ufa_picks.user.forms import RegisterForm
         return {
