@@ -81,9 +81,12 @@ class User(UserMixin, PkModel):
         return f"{self.first_name} {self.last_name}"
 
     def _get_score_2025(self, year):
+        from ufa_picks.game.models import cancelled_game_ids
+
+        cancelled_ids = cancelled_game_ids()
         score = 0
         for p in self.picks:
-            if p.game.season == year:
+            if p.game.season == year and p.game_id not in cancelled_ids:
                 score += p.points
         return score
 
@@ -94,13 +97,22 @@ class User(UserMixin, PkModel):
 
     def get_weekly_breakdown(self, year):
         """Get a detailed breakdown of weekly scores, including the dropped week."""
-        from ufa_picks.game.models import Game
+        from ufa_picks.game.models import Game, cancelled_game_ids
+
+        # Cancelled games never go Final; exclude them so their week can still
+        # complete (and thus become a drop candidate) and so they never score.
+        cancelled_ids = cancelled_game_ids()
 
         # Identify all regular season weeks (1-13) that have already started/passed.
         now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
         active_weeks_query = (
             db.session.query(Game.week)
-            .filter(Game.season == year, Game.week <= 13, Game.start_timestamp <= now)
+            .filter(
+                Game.season == year,
+                Game.week <= 13,
+                Game.start_timestamp <= now,
+                Game.id.notin_(cancelled_ids),
+            )
             .distinct()
         )
         active_weeks = [w[0] for w in active_weeks_query.all()]
@@ -109,7 +121,12 @@ class User(UserMixin, PkModel):
         incomplete_weeks = {
             w[0]
             for w in db.session.query(Game.week)
-            .filter(Game.season == year, Game.week <= 13, Game.status != "Final")
+            .filter(
+                Game.season == year,
+                Game.week <= 13,
+                Game.status != "Final",
+                Game.id.notin_(cancelled_ids),
+            )
             .distinct()
             .all()
         }
@@ -120,7 +137,7 @@ class User(UserMixin, PkModel):
         playoff_scores = {}
 
         for p in self.picks:
-            if p.game.season == year:
+            if p.game.season == year and p.game_id not in cancelled_ids:
                 w = p.game.week
                 if w <= 13:
                     if w in reg_season_scores:
@@ -166,18 +183,30 @@ class User(UserMixin, PkModel):
 
     def get_weekly_score(self, year, week):
         """Get the user's score for a specific week."""
+        from ufa_picks.game.models import cancelled_game_ids
+
+        cancelled_ids = cancelled_game_ids()
         year = str(year)
         week = int(week)
         score = 0
         for p in self.picks:
-            if p.game.season == year and p.game.week == week:
+            if (
+                p.game.season == year
+                and p.game.week == week
+                and p.game_id not in cancelled_ids
+            ):
                 score += p.points
         return score
 
     def get_game_score(self, game_id):
         """Get the points earned for a specific game."""
+        from ufa_picks.game.models import cancelled_game_ids
+
+        game_id = str(game_id)
+        if game_id in cancelled_game_ids():
+            return 0
         for p in self.picks:
-            if p.game_id == str(game_id):
+            if p.game_id == game_id:
                 return p.points
         return 0
 
