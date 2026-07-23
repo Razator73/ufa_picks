@@ -3,6 +3,29 @@
 from ufa_picks.database import Column, Model, db, relationship
 
 
+class CancelledGame(Model):
+    """A game that was cancelled and must be excluded from views and scoring.
+
+    This lives in its own table on purpose. Game rows are refreshed from an
+    external source that overwrites the ``games`` table (including ``status``)
+    on every load, so marking the game as cancelled there would not survive a
+    sync. The loader never touches this table, so entries here persist. Adding a
+    future cancellation is a single ``INSERT`` — no code change required.
+    """
+
+    __tablename__ = "cancelled_games"
+    game_id = Column(db.String(18), primary_key=True)
+
+
+def cancelled_game_ids():
+    """Return the set of game ids that have been cancelled.
+
+    Fetch this once and reuse it within scoring/view loops rather than querying
+    per game or per pick.
+    """
+    return {c.game_id for c in CancelledGame.query.all()}
+
+
 class Team(Model):
     """A store team info."""
 
@@ -98,6 +121,11 @@ class Game(Model):
         "Team", back_populates="away_games", foreign_keys=[away_team_id]
     )
     picks = relationship("Pick", back_populates="game", lazy="dynamic")
+
+    @property
+    def is_cancelled(self):
+        """Whether this game has been cancelled (excluded from views and scoring)."""
+        return db.session.get(CancelledGame, self.id) is not None
 
     @property
     def winner(self):

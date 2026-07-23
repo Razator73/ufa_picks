@@ -7,7 +7,7 @@ from flask_login import current_user, login_required
 
 from ufa_picks.extensions import db
 from ufa_picks.game.forms import GamePick
-from ufa_picks.game.models import Game
+from ufa_picks.game.models import Game, cancelled_game_ids
 from ufa_picks.user.models import Pick, User
 from ufa_picks.user.views import get_leaderboard_cache
 
@@ -43,6 +43,7 @@ def main(year):
     season = year if year else str(dt.datetime.now().year)
     games = (
         Game.query.filter_by(season=season)
+        .filter(Game.id.notin_(cancelled_game_ids()))
         .order_by(Game.week, Game.start_timestamp)
         .all()
     )
@@ -76,6 +77,7 @@ def pre_lock(year, week_num):
     token_form = GamePick(prefix="token")
     week_games = (
         Game.query.filter_by(season=year, week=week_num)
+        .filter(Game.id.notin_(cancelled_game_ids()))
         .order_by(Game.start_timestamp)
         .all()
     )
@@ -141,6 +143,12 @@ def update_pick(game_id):
     """Update a user's pick for a specific game via JSON API."""
     game = db.get_or_404(Game, game_id)
 
+    if game.is_cancelled:
+        return (
+            jsonify({"status": "error", "message": "This game has been cancelled."}),
+            400,
+        )
+
     if dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) > game.start_timestamp:
         return jsonify({"status": "error", "message": "Game has already started."}), 400
 
@@ -186,6 +194,7 @@ def post_lock(year, week_num):
     """Display games and picks after the week's first game has started (read-only)."""
     week_games = (
         Game.query.filter_by(season=year, week=week_num)
+        .filter(Game.id.notin_(cancelled_game_ids()))
         .order_by(Game.start_timestamp)
         .all()
     )
@@ -218,9 +227,13 @@ def post_lock(year, week_num):
 def game_details(year, game_id):
     """Display details and all picks for a single game."""
     game = db.get_or_404(Game, game_id)
+    if game.is_cancelled:
+        flash("That game has been cancelled.", "warning")
+        return redirect(url_for(".main", year=year))
     # Determine if the week is locked based on the first game of that week
     first_game = (
         Game.query.filter_by(season=year, week=game.week)
+        .filter(Game.id.notin_(cancelled_game_ids()))
         .order_by(Game.start_timestamp)
         .first()
     )
@@ -314,6 +327,7 @@ def week(week_num, year):
         return render_template("games/post_season.html", year=year)
     first_game = (
         Game.query.filter_by(season=year, week=week_num)
+        .filter(Game.id.notin_(cancelled_game_ids()))
         .order_by(Game.start_timestamp)
         .first()
     )

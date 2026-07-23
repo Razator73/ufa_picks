@@ -6,7 +6,7 @@ from factory import Sequence, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 
 from ufa_picks.database import db
-from ufa_picks.game.models import Game, Team
+from ufa_picks.game.models import CancelledGame, Game, Team
 from ufa_picks.user.models import Pick, User
 
 
@@ -79,3 +79,14 @@ class PickFactory(BaseFactory):
         """Factory configuration."""
 
         model = Pick
+
+
+class CancelledGameFactory(BaseFactory):
+    """Cancelled game factory."""
+
+    game_id = Sequence(lambda n: f"G{n}")
+
+    class Meta:
+        """Factory configuration."""
+
+        model = CancelledGame
